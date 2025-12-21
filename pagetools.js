@@ -2,7 +2,7 @@ let allFonts = [];
 let defaultFont = 'Average-Regular';
 
 
-function initFonts() {
+function initFonts_old() {
     
     defaultFont = window.getComputedStyle(document.body).fontFamily;
 
@@ -20,6 +20,46 @@ function initFonts() {
         }
     }
 }
+
+function initFonts() {
+    // 1. Try to scan the stylesheets first (Standard way)
+    const detectedFonts = [];
+    for (const sheet of document.styleSheets) {
+        try {
+            const rules = sheet.cssRules || sheet.rules;
+            if (!rules) continue;
+            for (const rule of rules) {
+                if (rule.type === 5 || rule instanceof CSSFontFaceRule) {
+                    const family = rule.style.fontFamily.replace(/['"]/g, '').trim();
+                    if (family && !detectedFonts.includes(family)) {
+                        detectedFonts.push(family);
+                    }
+                }
+            }
+        } catch (e) { continue; }
+    }
+
+    // 2. Fallback: If Firefox detected 0 or only 1 font, use the hardcoded list
+    // This solves the "Inactive Font" issue in Firefox.
+    if (detectedFonts.length <= 1) {
+        allFonts = [
+            'Petrona-Thin', 'OHfont', 'Cardo-Regular', 'GoudyBookletter1911-Regular',
+            'CrimsonPro-VariableFont_wght', 'Quattrocento-Regular', 'Average-Regular',
+            'Cormorant-VariableFont_wght', 'Cormorant-Regular', 'OldStandardTT-Regular',
+            'Petrona-Regular', 'Montaga-Regular', 'LindenHill-Regular', 'CrimsonText-Regular',
+            'LibreBaskerville-VariableFont_wght', 'Platypi-VariableFont_wght', 
+            'Lancelot-Regular', 'NotoSans-VariableFont_wdth,wght'
+        ];
+        console.log("Firefox fallback triggered. Fonts loaded from list.");
+    } else {
+        allFonts = detectedFonts;
+        console.log("Fonts detected from CSS:", allFonts);
+    }
+
+    // Initialize your default font
+    defaultFont = window.getComputedStyle(document.body).fontFamily.replace(/['"]/g, '');
+}
+
 
 function rotateCustomFonts() {
     if (allFonts.length === 0) initFonts();
@@ -45,9 +85,9 @@ function rotateCustomFonts() {
     console.log(`Detected rendered font: ${cleanComputedStyle}`);
     console.log(`Switched to: ${nextFont}`);
 }
-initFonts();
-
-
+window.addEventListener('load', () => {
+    initFonts();
+});
 
 
 
