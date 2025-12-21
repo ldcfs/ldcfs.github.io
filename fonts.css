@@ -44,11 +44,6 @@
 }
 
 @font-face {
-  font-family: 'BBHHegarty-Regular';
-  src: url('fonts/BBHHegarty-Regular.ttf') format('truetype');
-}
-
-@font-face {
   font-family: 'Petrona-Thin';
   src: url('fonts/Petrona-Thin.ttf') format('truetype');
 }

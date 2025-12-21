@@ -1,6 +1,11 @@
 let allFonts = [];
+let defaultFont = 'Average-Regular';
+
 
 function initFonts() {
+    
+    defaultFont = window.getComputedStyle(document.body).fontFamily;
+
     allFonts = [];
     for (const sheet of document.styleSheets) {
         try {
@@ -24,7 +29,7 @@ function rotateCustomFonts() {
     const computedStyle = window.getComputedStyle(document.body).fontFamily;
     
     // Clean up quotes for a cleaner search
-    const cleanComputedStyle = computedStyle.replace(/['"]/g, '');
+    const cleanComputedStyle = computedStyle.split(',')[0].replace(/['"]/g, '');
 
     // 2. Search our list to see if any of our custom fonts are currently active
     let currentIndex = allFonts.findIndex(font => cleanComputedStyle.includes(font));
@@ -35,14 +40,12 @@ function rotateCustomFonts() {
     const nextFont = allFonts[nextIndex];
 
     // 4. Apply the new font
-    document.body.style.fontFamily = `"${nextFont}", sans-serif`;
+    document.body.style.fontFamily = `"${nextFont}", ${defaultFont}`;//, sans-serif`;
 
     console.log(`Detected rendered font: ${cleanComputedStyle}`);
     console.log(`Switched to: ${nextFont}`);
 }
 initFonts();
-
-
 
 
 
