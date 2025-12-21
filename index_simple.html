@@ -1,0 +1,338 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="fonts.css" crossorigin="anonymous">
+  <link rel="shortcut icon" href="ldc-logo-sq.png">
+  <style>
+    :root {
+      /* --bg-col: #fff;
+      --txt-col: #000; */
+      --bg-col: #202020;
+      --btn-bg: #32353b;
+      --txt-col: #f1f1f1;
+    }
+
+    /* @font-face { */
+    /* font-family: 'NotoSans'; */
+    /* This is the name you will use in your CSS */
+    /* src:
+        url('fonts/NotoSans-VariableFont_wdth\,wght.ttf') format('truetype'), */
+    /* url('fonts/GoudyBookletter1911-Regular.ttf') format('truetype'), */
+    /* Modern browsers */
+    /* url('fonts/Petrona-Thin.woff2') format('woff2'), */
+    /* } */
+
+
+    body {
+      margin: 0;
+      font-family: 'Average-Regular';
+      /* background-color: #f4f4f1; */
+      background-color: var(--bg-col);
+      color: var(--txt-col)
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      font-family: inherit;
+      font-size: inherit;
+      line-height: inherit;
+    }
+
+
+    header {
+      /* font-family: "CustomFont"; */
+      /* background-color: rgb(36, 38, 44); */
+      background-color: rgb(0, 0, 0);
+      color: #ddd;
+      margin: 0;
+      padding-bottom: 10px;
+
+      background-image: url('ldc-logo-tiny.png');
+      background-size: contain;
+      /* Scales image to fill the header */
+      background-position: center;
+      /* Keeps the middle of the image visible */
+      background-repeat: no-repeat;
+      /* Prevents the image from tiling */
+      min-height: 80px;
+      /* Gives the header some height */
+
+      /* background-color: #ffffff; */
+      /* offset-x | offset-y | blur-radius | spread-radius | color */
+      box-shadow: 0 8px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.26);
+    }
+
+
+    main {
+      padding: 10px;
+      text-align: center;
+    }
+
+    article {
+      text-align: start;
+    }
+
+    summary span:first-of-type {
+      font-size: large;
+      font-weight: bold;
+    }
+
+
+    details {
+      overflow: hidden;
+      border: 1px solid #777777;
+      border-radius: 8px;
+      margin: 0 20vw;
+      /* padding-bottom: 10px; */
+      margin-bottom: 10px;
+      /* transition: all 0.3s ease-out; */
+    }
+
+    @media (max-width: 800px) {
+      details {
+        margin: 0 5vw;
+        /* Reduce margins */
+      }
+    }
+
+    /* Allow animations to 'auto' heights */
+    :root {
+      interpolate-size: allow-keywords;
+    }
+
+
+    details::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition:
+        block-size 0.4s ease,
+        opacity 0.3s ease,
+        content-visibility 0.4s allow-discrete;
+    }
+
+    details[open]::details-content {
+      padding-top: 5px;
+      block-size: auto;
+      /* padding: 10px; */
+      opacity: 1;
+    }
+
+
+    details summary {
+      background-color: #5f5f5f;
+      font-weight: bold;
+      /* margin-bottom: 5px; */
+    }
+
+    details div:first-of-type {
+      text-align: start;
+      padding: 10px;
+    }
+
+    p {
+      /* padding: 10px; */
+      margin: 10px;
+    }
+
+    button {
+      color: var(--txt-col);
+      background-color: var(--btn-bg);
+      border-width: 1px;
+      border-style: dotted;
+      border-color: rgb(133, 133, 133);
+      padding: 10px 10px;
+    }
+
+    .message-exchange a {
+      display: block;
+      color: var(--txt-col);
+      margin-bottom: 20px;
+    }
+
+    .nav-btns {
+      display:grid;
+      /* flex-direction: column; */
+      grid-template-columns: 1fr;
+      width: 10%;
+
+    }
+  </style>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+  <script>function goToColorful() { window.location.href = "/"; }</script>
+</head>
+
+<body>
+  <header>
+    <!-- Guides in studying science, information technology and languages. -->
+    <!-- Jesus Christ -->
+    <!-- "I am the Truth, the Way, and the Life" -->
+     
+    <div class="nav-btns">
+
+      <button onclick="rotateCustomFonts()">Change Font</button>
+      <button onclick="goToColorful()">Color Version</button>
+    </div>
+  </header>
+  <nav>
+
+  </nav>
+  <main>
+
+
+    <article>
+      <h1>Who are we?</h1>
+      <p>
+        We are an organization specializing in:
+      <ul>
+        <li>Education and Attitude</li>
+        <li>Computer Science</li>
+        <li>Scientific Research</li>
+        <li>Data Engineering</li>
+        <li>Web/Application Development</li>
+        <li>Natural Language Processing</li>
+        <li>Synthesis of knowledge across domains</li>
+      </ul>
+      </p>
+    </article>
+
+
+    <!-- <h2>Functions, Equations and Data Structures</h2> -->
+
+    <article>
+      <h1>How do we work?</h1>
+      <p>
+
+      <ol>
+        <li><b>Establish relationship:</b> built on transparent communication</li>
+        <li>Research domain</li>
+        <li>Build protype</li>
+        <li>Gather feedback</li>
+        <li>Plan</li>
+        <li>Build</li>
+        <li>Maintain</li>
+      </ol>
+      </p>
+    </article>
+
+    <!-- <p>
+      \(The\ Truth = The\ Way = The\ Life = 
+      \\ = The\ Word\ of\ God = The\ Light = The\ Gate = 
+      \\ = Good\ Shepherd = Savior = Humble\ at\ Heart = Gentle \)
+    </p> -->
+
+
+    <article>
+      <h1>Core processes and values:</h1>
+
+      <p>
+        \( eXperience =\sum_{i=1}^{n} x_i \)
+      </p>
+      <p>
+        Attitude towards self = Attitude towards others.
+      </p>
+      <p>
+        Being supportive is our lifeblood.
+      </p>
+      <p>
+        Patience & Perseverence
+      </p>
+      <p>
+        Kindness, Gentlness and Compassion
+      </p>
+      <p>
+        "It's not a shame when mistakes happen,<br>
+        yet sweeping mistakes under carpet is a shameful habit.""
+      </p>
+      <p>
+        "Admitting one's mistakes is the first step towards becoming Ideal.""
+      </p>
+      <p>
+        "We want to shine the Light of Love."
+      </p>
+      <p>
+        "Humble attiude is being alert, ready to listen, and compassionate towards all creatures."
+      </p>
+      <p>
+        Test everything and hold on to what is good.
+      </p>
+
+    </article>
+
+    <br>
+
+    <article>
+      <h1>Q&A</h1>
+
+
+      <details>
+        <summary>How to benefit from every study?</summary>
+        <div>
+          <p>
+            <b>faithfully</b> follow and study The Truth
+          </p>
+          <p>
+            The Truth is the Foundation which never fails because it will always be true
+
+          </p>
+          <P>
+            The Truth is Uderlying Principle of the Universe:
+          </P>
+          <p>
+            study the structure and mechanisms of the universe
+            and always remain humble and respectful to everyone.
+          </p>
+        </div>
+      </details>
+      <details>
+        <summary>
+          How the Truth is the Foundation of the Universe?
+        </summary>
+        <div>
+          <p>1. The Truth (set of Laws which are always in power and never change)</p>
+          <p>2. Science, Language and everything is based on the Truth</p>
+          <p>3. The Truth is Coherent, Consistent.</p>
+        </div>
+      </details>
+
+      <details>
+        <summary>
+          How to follow the Truth?
+        </summary>
+        <div>
+          <p>Proceed with small steps</p>
+          <p>Progress exponentially:
+            <br> slow and stable beginnings - to estabilish foundations
+            <br> (solid foundations are necessary to support exponenial growth)
+          </p>
+          <br> Making small and careful steps protect from making bigger mistakes
+          <br> Verifiy every new information against the Root/Core of the Truth
+
+          </p>
+          <p>Learn to discern incoming information:
+            <br>Being open to new information requires being able to discern and reject false information.
+          </p>
+        </div>
+      </details>
+    </article>
+
+    <article>
+      <H1>Message exchange channels</H1>
+      <p class="message-exchange">
+        <a href="https://www.linkedin.com/company/light-distribution-channel">LinkedIn</a>
+        <a href="https://www.instagram.com/light_distribution_channel/">Instagram</a>
+        <a href="https://www.threads.com/@light_distribution_channel">Threads</a>
+
+      </p>
+
+    </article>
+
+  </main>
+  <script src="pagetools.js"></script>
+</body>
+
+</html>
