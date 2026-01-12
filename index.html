@@ -177,7 +177,7 @@
 
     .nav-btns {
       position: fixed;
-      top:0;
+      top: 0;
       display: grid;
       /* flex-direction: column; */
       grid-template-columns: 1fr;
@@ -301,17 +301,17 @@
     }
 
     .glow-text {
-      font-size: 40px;
+      /* font-size: 40px; */
       color: #fff;
       text-shadow:
         0 0 7px #fff,
-        0 0 10px #ffffffa9,
-        0 0 21px #0fa,
-        0 0 42px #0fa;
+        0 0 10px #3cff35a9,
+        0 0 21px rgba(0, 255, 170, 0.719),
+        0 0 42px rgba(0, 255, 170, 0.582);
     }
 
-    .glow-text-golden {
-      font-size: 40px;
+    .glow-text-purple {
+      /* font-size: 40px; */
       color: #fff;
       text-shadow:
         0 0 7px #fff,
@@ -319,12 +319,9 @@
         0 0 22px rgba(71, 39, 160, 0.781),
         0 0 42px rgba(153, 0, 255, 0.747);
     }
-    .glow-text-golden-outer {
-      text-shadow: 
 
-    }
     .glow-text-white {
-      font-size: 40px;
+      /* font-size: 40px; */
       color: #fff;
       text-shadow:
         0 0 7px #fff,
@@ -341,6 +338,9 @@
         0 0 10px #ffae00bb,
         0 0 21px rgba(0, 162, 255, 0.623),
         0 0 42px rgba(140, 0, 255, 0.692);
+    }
+    .enlarge-text {
+      font-size: 150%;
     }
   </style>
 
@@ -364,8 +364,10 @@
 
       <section style="color:#b1b1b1; font-size:1.5rem; background-color: #000;">
         <p class="glow-text-white" style="text-align: center;">Light<br>Distribution<br>Channel</p>
-        <p style="text-align: center;"><span class="glow-text-2">Isn't </span> <span class="glow-text">kindness</span><span class="glow-text-2">
-            part of being</span> <span class="glow-text-golden">awesome</span><span class="glow-text-2">?</span></span></p>
+        <p style="text-align: center;"><span class="glow-text-2">Isn't </span> <span
+            class="glow-text enlarge-text">kindness</span><span class="glow-text-2">
+            part of being</span> <span class="glow-text-purple enlarge-text">awesome</span><span class="glow-text-2">?</span></span>
+        </p>
       </section>
     </div>
   </header>
@@ -394,7 +396,7 @@
 
     <section class="about-us">
       <div class="container">
-        <h2 class="section-title">Who Are We?</h2>
+        <h2 class="section-title glow-text-2">Who Are We?</h2>
         <p class="section-subtitle">A <span style="font-variant: small-caps;">multidisciplinary collective </span></p>
         <p> <u>bridging</u> the <span style="letter-spacing: 0.2em; margin: 0 0.5em;">gap</span> <u>between</u> </p>
         <p><span style="color:rgb(208, 255, 177)">"awesome lifestyle"</span> and <span
@@ -402,7 +404,7 @@
         </p>
         <p style="font-size: smaller;">(in other words)</p>
         <p>exploring ways </p>
-        <p>to introduce more <span class="glow-text">kindness</span>, <span class="glow-text-2">time</span> and <span
+        <p>to introduce more <span class="glow-text enlarge-text">kindness</span>, <span class="glow-text-2">time</span> and <span
             class="glow-text-2">space</span></p>
         <p>into the world of <span style="color:rgb(255, 221, 177)">business</span> and <span
             style="color:rgb(193, 225, 255)">technology</span>.</p>
@@ -453,8 +455,8 @@
       <p>
 
       <section class="workflow-section">
-        <h1>How do we work?</h1>
-        <h2>Workflow abstraction</h2>
+        <h1 class="glow-text-2">How do we work?</h1>
+        <h2 class="glow-text-purple">Workflow abstraction</h2>
 
         <div class="workflow-container">
           <div class="workflow-step">
@@ -723,7 +725,7 @@
         }
       </style>
       <div class="values-header">
-        <h2>Core Processes & Values</h2>
+        <h2 class="glow-text-2">Core Processes & Values</h2>
       </div>
 
       <div class="formula-box">
@@ -814,7 +816,7 @@
     <br>
 
     <article>
-      <h1>Q&A</h1>
+      <h1 class="glow-text-2">Q&A</h1>
 
 
       <details class="q-and-a" style="text-align: start;">
@@ -871,12 +873,13 @@
       </details>
     </article>
 
-    <section class="learning ">
+    <section class="learning " style="margin-top:5rem;">
       <style>
 
       </style>
-      <h1>Challange: Solve the Abstract Equation of Perception</h1>
-      <p style="font-size: 1.5rem;">and collect the reward.</p>
+      <h1 class="glow-text-2">Challange:</h1>
+      <h2 class="glow-text-purple"> Solve the Abstract Equation of Perception</h2>
+      <p style="font-size: 1.5rem;" class="glow-text">and collect the reward.</p>
       <div class="challange">
         <div class="card wide education">
           <h3></h3>
