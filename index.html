@@ -2,6 +2,7 @@
 <html>
 
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="fonts.css" crossorigin="anonymous">
   <link rel="shortcut icon" href="ldc-logo-sq.png">
@@ -357,23 +358,49 @@
       background: var(--bg-col-light);
       color: white;
       border: none;
-      padding: 18px 0px;
+      padding: 18px 12px;
       border-radius: 50%;
       /* border: 1px solid; */
       cursor: pointer;
       font-weight: 600;
-      box-shadow: 0 0px 12px rgba(255, 221, 71, 0.664);
+      box-shadow: 0 0px 12px rgba(255, 251, 234, 0.37);
       transition: transform 0.2s;
     }
 
     .menu-toggle:active {
       transform: scale(0.95);
     }
+
+    .menu-content {
+      display: none;
+      align-content: center;
+
+      margin-top: 10px;
+      background: var(--bg-color);
+      backdrop-filter: blur(10px);
+      /* Modern blur effect */
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      min-width: 120px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      padding: 8px;
+    }
+
+    .is-visible {
+      display: block;
+    }
+
+    .nav-btns button {
+      padding: 15px 15px;
+      min-height: 60px;
+      min-width: 120px;
+    }
   </style>
 
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
   <script>function goToSimple() { window.location.href = "/index_simple.html"; }</script>
   <script>function goToTranslated() { window.location.href = "https://ldcfs-github-io.translate.goog/?_x_tr_sl=en&_x_tr_tl=pl&_x_tr_hl=pl&_x_tr_pto=wapp"; }</script>
+
 </head>
 
 <body>
@@ -381,13 +408,32 @@
     <!-- Guides in studying science, information technology and languages. -->
     <!-- Jesus Christ -->
     <!-- "I am the Truth, the Way, and the Life" -->
-    <div class="nav-btns corner-nav">
-      <button class="menu-toggle">Menu</button>
+    <div class="corner-nav">
+      <button class="menu-toggle" id="menuBtn">Menu</button>
+      <div class="menu-content nav-btns" id="menuBox">
+        <button onclick="rotateCustomFonts()">Change Font</button>
+        <button onclick="goToSimple()">Simple Version</button>
+        <button onclick="goToTranslated()">Język Polski</button>
 
-      <button onclick="rotateCustomFonts()">Change Font</button>
-      <button onclick="goToSimple()">Simple Version</button>
-      <button onclick="goToTranslated()">Polski</button>
+      </div>
     </div>
+    <script defer>
+      const btn = document.getElementById('menuBtn');
+      const box = document.getElementById('menuBox');
+
+      // Toggle visibility on click
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent document click from firing immediately
+        box.classList.toggle('is-visible');
+      });
+
+      // Close menu when clicking anywhere else on the screen
+      document.addEventListener('click', (e) => {
+        if (!box.contains(e.target) && e.target !== btn) {
+          box.classList.remove('is-visible');
+        }
+      });
+    </script>
     <div>
 
       <section style="color:#b1b1b1; font-size:1.5rem; background-color: #000;">
