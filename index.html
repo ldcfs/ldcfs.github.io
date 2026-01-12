@@ -339,8 +339,35 @@
         0 0 21px rgba(0, 162, 255, 0.623),
         0 0 42px rgba(140, 0, 255, 0.692);
     }
+
     .enlarge-text {
       font-size: 150%;
+    }
+
+    /* Fixed Position Container */
+    .corner-nav {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      z-index: 9999;
+    }
+
+    /* The Trigger Button */
+    .menu-toggle {
+      background: var(--bg-col-light);
+      color: white;
+      border: none;
+      padding: 18px 0px;
+      border-radius: 50%;
+      /* border: 1px solid; */
+      cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 0px 12px rgba(255, 221, 71, 0.664);
+      transition: transform 0.2s;
+    }
+
+    .menu-toggle:active {
+      transform: scale(0.95);
     }
   </style>
 
@@ -354,7 +381,8 @@
     <!-- Guides in studying science, information technology and languages. -->
     <!-- Jesus Christ -->
     <!-- "I am the Truth, the Way, and the Life" -->
-    <div class="nav-btns">
+    <div class="nav-btns x-corner-nav">
+      <!-- <button class="menu-toggle">Menu</button> -->
 
       <button onclick="rotateCustomFonts()">Change Font</button>
       <button onclick="goToSimple()">Simple Version</button>
@@ -366,7 +394,8 @@
         <p class="glow-text-white" style="text-align: center;">Light<br>Distribution<br>Channel</p>
         <p style="text-align: center;"><span class="glow-text-2">Isn't </span> <span
             class="glow-text enlarge-text">kindness</span><span class="glow-text-2">
-            part of being</span> <span class="glow-text-purple enlarge-text">awesome</span><span class="glow-text-2">?</span></span>
+            part of being</span> <span class="glow-text-purple enlarge-text">awesome</span><span
+            class="glow-text-2">?</span></span>
         </p>
       </section>
     </div>
@@ -404,9 +433,10 @@
         </p>
         <p style="font-size: smaller;">(in other words)</p>
         <p>exploring ways </p>
-        <p>to introduce more <span class="glow-text enlarge-text">kindness</span>, <span class="glow-text-2">time</span> and <span
-            class="glow-text-2">space</span></p>
-        <p>into the world of <span style="color:rgb(255, 221, 177)">business</span> and <span
+        <p>to introduce more <span class="glow-text enlarge-text">kindness</span>, <span class="glow-text-2">time</span>
+          and <span class="glow-text-2">space</span></p>
+        <p>into <span style="color:#ffb1eb;">daily living</span></p>
+        <p> and the world of <span style="color:rgb(255, 221, 177)">business</span> and <span
             style="color:rgb(193, 225, 255)">technology</span>.</p>
 
         <div class="expertise-grid">
