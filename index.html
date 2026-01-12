@@ -55,10 +55,10 @@
       margin: 0;
       padding-bottom: 10px;
 
-      background-image: url('ldc-logo-white-tiny.png') !important;
+      /* background-image: url('ldc-logo-white-tiny.png') !important;
       background-position: center, top left;
       background-repeat: no-repeat, repeat;
-      background-size: contain, auto;
+      background-size: contain, auto; */
 
       transform: translateZ(0);
       will-change: transform;
@@ -176,6 +176,8 @@
     }
 
     .nav-btns {
+      position: fixed;
+      top:0;
       display: grid;
       /* flex-direction: column; */
       grid-template-columns: 1fr;
@@ -307,6 +309,7 @@
         0 0 21px #0fa,
         0 0 42px #0fa;
     }
+
     .glow-text-golden {
       font-size: 40px;
       color: #fff;
@@ -316,6 +319,16 @@
         0 0 21px rgb(255, 208, 0),
         0 0 42px rgb(251, 255, 0);
     }
+    .glow-text-white {
+      font-size: 40px;
+      color: #fff;
+      text-shadow:
+        0 0 7px #fff,
+        0 0 10px #ffffffa4,
+        0 0 21px #ffffff67,
+        0 0 42px #ffffff33;
+    }
+
     .glow-text-2 {
       /* font-size: 1rem; */
       color: #fff;
@@ -341,7 +354,14 @@
       <button onclick="rotateCustomFonts()">Change Font</button>
       <button onclick="goToSimple()">Simple Version</button>
     </div>
-    <div></div>
+    <div>
+
+      <section style="color:#b1b1b1; font-size:1.5rem; background-color: #000;">
+        <p class="glow-text-white" style="text-align: center;">Light<br>Distribution<br>Channel</p>
+        <p style="text-align: center;"><span class="glow-text-2">Isn't </span> <span class="glow-text">kindness</span><span class="glow-text-2">
+            part of being</span> <span class="glow-text-golden">awesome</span><span></span>?</span></p>
+      </section>
+    </div>
   </header>
   <nav>
 
@@ -365,9 +385,6 @@
       </p>
     </article> -->
 
-    <section style="color:#b1b1b1; font-size:1.5rem;">
-      <p><span class="glow-text-2">Isn't </span> <span class="glow-text">kindness</span><span class="glow-text-2"> part of being</span> <span class="glow-text-golden">awesome</span>?</p>
-    </section>
 
     <section class="about-us">
       <div class="container">
@@ -379,8 +396,10 @@
         </p>
         <p style="font-size: smaller;">(in other words)</p>
         <p>exploring ways </p>
-        <p>to introduce more <span class="glow-text">kindness</span>, <span class="glow-text-2">time</span> and <span class="glow-text-2">space</span></p>
-        <p>into the world of <span style="color:rgb(255, 221, 177)">business</span> and <span style="color:rgb(193, 225, 255)">technology</span>.</p>
+        <p>to introduce more <span class="glow-text">kindness</span>, <span class="glow-text-2">time</span> and <span
+            class="glow-text-2">space</span></p>
+        <p>into the world of <span style="color:rgb(255, 221, 177)">business</span> and <span
+            style="color:rgb(193, 225, 255)">technology</span>.</p>
 
         <div class="expertise-grid">
           <div class="card wide education">
