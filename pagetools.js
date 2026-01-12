@@ -45,7 +45,8 @@ function initFonts() {
         allFonts = [
             'Petrona-Thin', 'OHfont', 'Cardo-Regular', 'GoudyBookletter1911-Regular',
             'CrimsonPro-VariableFont_wght', 'Quattrocento-Regular', 'Average-Regular',
-            'Cormorant-VariableFont_wght', 'Cormorant-Regular', 'OldStandardTT-Regular',
+            // 'Cormorant-VariableFont_wght', 'Cormorant-Regular',
+             'OldStandardTT-Regular',
             'Petrona-Regular', 'Montaga-Regular', 'LindenHill-Regular', 'CrimsonText-Regular',
             'LibreBaskerville-VariableFont_wght', 'Platypi-VariableFont_wght', 
             'Lancelot-Regular', 'NotoSans-VariableFont_wdth,wght'

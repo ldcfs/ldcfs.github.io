@@ -33,10 +33,10 @@
   src: url('fonts/Average-Regular.ttf') format('truetype');
 }
 
-@font-face {
+/* @font-face {
   font-family: 'Cormorant-VariableFont_wght';
   src: url('fonts/Cormorant-VariableFont_wght.ttf') format('truetype');
-}
+} */
 
 @font-face {
   font-family: 'OHfont';
@@ -48,11 +48,11 @@
   src: url('fonts/Petrona-Thin.ttf') format('truetype');
 }
 
-@font-face {
+/* @font-face {
   font-family: 'Cormorant-Regular';
   src: url('fonts/Cormorant-Regular.ttf') format('truetype');
 }
-
+ */
 @font-face {
   font-family: 'HedvigLettersSerif-Regular-VariableFont_opsz';
   src: url('fonts/HedvigLettersSerif-Regular-VariableFont_opsz.ttf') format('truetype');
