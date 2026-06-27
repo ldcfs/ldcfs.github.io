@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multilingual Bible Verse Browser</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            max-width: 1000px;
+            margin: auto;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .panel {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        select, input[type="number"], button {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .verse-text {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .lang-label {
+            font-weight: bold;
+            color: #7f8c8d;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .word-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .word-table th, .word-table td {
+            border: 1px solid #ecf0f1;
+            padding: 10px;
+            text-align: left;
+        }
+        .word-table th {
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+        .book-grid,
+        .chapter-grid,
+        .chapter-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            /* gap: 6px; */
+            /* margin-top: 14px; */
+        }
+        .book-grid button,
+        .chapter-grid button,
+        .chapter-buttons button {
+            width: 100%;
+            padding: 2px 1px;
+            border: 1px solid #ccc;
+            /* border-radius: 6px; */
+            background: white;
+            color: #2c3e50;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+        }
+        .book-grid button:hover,
+        .chapter-grid button:hover,
+        .chapter-buttons button:hover {
+            background-color: #ecf0f5;
+        }
+        .book-grid button.active,
+        .chapter-grid button.active,
+        .chapter-buttons button.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        .word-table button {
+            font: inherit;
+        }
+        .hebrew {
+            font-size: 20px;
+            direction: rtl;
+        }
+        .hebrew-interlinear {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 6px;
+            margin-top: 12px;
+            align-items: start;
+        }
+        .hebrew-word {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            text-align: center;
+            padding: 10px 8px;
+            border: 1px solid #e0e7ef;
+            border-radius: 8px;
+            background: #fcfcff;
+            min-width: 80px;
+            word-break: break-word;
+        }
+        .hebrew-surface {
+            font-size: 22px;
+            line-height: 1.2;
+            margin-bottom: 6px;
+            direction: rtl;
+        }
+        .hebrew-root {
+            font-size: 14px;
+            color: #34495e;
+            margin-bottom: 4px;
+        }
+        .hebrew-root-button {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #2c3e50;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .hebrew-root-button:hover {
+            color: #1a5276;
+        }
+        .root-results {
+            margin-top: 20px;
+            padding: 16px;
+            border: 1px solid #dce3e8;
+            border-radius: 10px;
+            background: #fbfcff;
+        }
+        .root-results h3 {
+            margin: 0 0 12px;
+            font-size: 16px;
+            color: #34495e;
+        }
+        .root-results .root-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .root-results button {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: white;
+            color: #2c3e50;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .root-results button:hover {
+            background: #ecf2f8;
+        }
+        .hebrew-gloss {
+            font-size: 13px;
+            color: #4a5568;
+            opacity: 0.9;
+            line-height: 1.3;
+        }
+        .greek-text {
+            font-size: 18px;
+            font-family: 'Times New Roman', Georgia, serif;
+            line-height: 1.35;
+            direction: ltr;
+            letter-spacing: 0.03em;
+        }
+        .greek-interlinear {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .greek-word {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            min-width: 90px;
+            padding: 10px 8px;
+            border: 1px solid #e0e7ef;
+            border-radius: 8px;
+            background: #f9fbfd;
+            word-break: break-word;
+        }
+        .greek-glyph {
+            font-family: 'Palatino Linotype', 'Times New Roman', Georgia, serif;
+            font-size: 24px;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+        .greek-pronunciation,
+        .greek-translation,
+        .greek-root {
+            font-size: 13px;
+            color: #4a5568;
+            opacity: 0.88;
+            min-height: 1.2em;
+            line-height: 1.3;
+        }
+        .greek-pronunciation {
+            margin-bottom: 4px;
+            font-style: italic;
+        }
+        .greek-root {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .greek-root-button {
+            background: none;
+            border: none;
+            padding: 0;
+            color: #2c3e50;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .greek-root-button:hover {
+            color: #1a5276;
+        }
+        .greek-info-button,
+        .hebrew-info-button {
+            background: none;
+            border: none;
+            color: #7b0ea3;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 12px;
+            padding: 0;
+            margin-left: 6px;
+        }
+        .greek-info-button:hover,
+        .hebrew-info-button:hover {
+            color: #5b0d82;
+        }
+        .info-panel {
+            border: 1px solid #dcdfe6;
+            background: #fbfcfe;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .info-panel h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .info-panel dl {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 8px 16px;
+            margin: 0;
+        }
+        .info-panel dt {
+            font-weight: 700;
+            color: #333;
+        }
+        .info-panel dd {
+            margin: 0;
+            color: #4a5568;
+        }
+        #status {
+            font-weight: bold;
+            color: #e67e22; /* Warning orange while loading */
+        }
+        .success {
+            color: #27ae60 !important;
+        }
+        .error {
+            color: #c0392b !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Multilingual Bible Browser</h1>
+
+
+
+    <div id="output">
+        <div id="bookGridContainer"></div>
+        <div id="chapterButtonContainer"></div>
+        <div id="chapterGridContainer"></div>
+        <div id="verseDetailContainer"></div>
+        <div id="rootResultsContainer"></div>
+        <div id="infoPanelContainer"></div>
+    </div>
+    
+    <div class="panel">
+        <h2>Browse</h2>
+        <div class="controls">
+            <select id="bookSelect"></select>
+            <label>Ch:</label>
+            <input type="number" id="chapterInput" value="1" min="1" style="width: 70px;">
+            <label>Vs:</label>
+            <input type="number" id="verseInput" value="1" min="1" style="width: 70px;">
+            <button id="displayBtn" onclick="displayVerse()" disabled>Display Verse</button>
+        </div>
+    </div>
+    <div class="panel">
+        <h2>System Status</h2>
+        <div id="status">⏳ Initializing and fetching files...</div>
+    </div>
+
+    <script>
+        // Standard 66 Books of the Bible mapped to standard 3-letter abbreviations
+        const bookNames = [
+            "GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT","1SA","2SA","1KI","2KI","1CH","2CH",
+            "EZR","NEH","EST","JOB","PSA","PRO","ECC","SON","ISA","JER","LAM","EZE","DAN",
+            "HOS","JOE","AMO","OBA","JON","MIC","NAH","HAB","ZEP","HAG","ZEC","MAL",
+            "MAT","MAR","LUK","JOH","ACT","ROM","1CO","2CO","GAL","EPH","PHI","COL",
+            "1TH","2TH","1TI","2TI","TIT","PHM","HEB","JAM","1PE","2PE","1JO","2JO",
+            "3JO","JUD","REV"
+        ];
+
+        // Database to store parsed contents
+        const db = { csv: {}, en: {}, pl: {}, rootIndex: {}, greekRootIndex: {}, greekRootInfo: {} };
+        const greekCache = {};
+        let greekRootIndexBuilt = false;
+        const greekBookMap = {
+            MAT: 'Matthew',
+            MAR: 'Mark',
+            LUK: 'Luke',
+            JOH: 'John',
+            ACT: 'Acts',
+            ROM: 'Romans',
+            '1CO': '1_Corinthians',
+            '2CO': '2_Corinthians',
+            GAL: 'Galatians',
+            EPH: 'Ephesians',
+            PHI: 'Philippians',
+            COL: 'Colossians',
+            '1TH': '1_Thessalonians',
+            '2TH': '2_Thessalonians',
+            '1TI': '1_Timothy',
+            '2TI': '2_Timothy',
+            TIT: 'Titus',
+            PHM: 'Philemon',
+            HEB: 'Hebrews',
+            JAM: 'James',
+            '1PE': '1_Peter',
+            '2PE': '2_Peter',
+            '1JO': '1_John',
+            '2JO': '2_John',
+            '3JO': '3_John',
+            JUD: 'Jude',
+            REV: 'Revelation'
+        };
+
+        // Initialize Book Selector
+        const bookSelect = document.getElementById("bookSelect");
+        bookNames.forEach((b, i) => {
+            let opt = document.createElement("option");
+            opt.value = i + 1; 
+            opt.textContent = b;
+            bookSelect.appendChild(opt);
+        });
+
+        // Automatically fetch files on window load
+        window.onload = async function() {
+            const statusEl = document.getElementById('status');
+            const displayBtn = document.getElementById('displayBtn');
+
+            try {
+                // Fetch all three files concurrently
+                const [csvRes, enRes, plRes] = await Promise.all([
+                    fetch('new2_db.csv'),
+                    fetch('bible_en.xml'),
+                    fetch('bible_pl.xml')
+                ]);
+
+                // Check if the fetches were successful
+                if (!csvRes.ok || !enRes.ok || !plRes.ok) {
+                    throw new Error("Failed to fetch one or more files. Are you running a local web server?");
+                }
+
+                statusEl.textContent = "⏳ Parsing files... This might take a moment.";
+
+                // Read text data
+                const csvText = await csvRes.text();
+                const enText = await enRes.text();
+                const plText = await plRes.text();
+
+                // Parse data into database
+                parseCSV(csvText);
+                parseXML(enText, 'en');
+                parseXML(plText, 'pl');
+
+                try {
+                    const greekLexRes = await fetch('lexicons/strongsgreek.xml');
+                    if (greekLexRes.ok) {
+                        const greekLexText = await greekLexRes.text();
+                        parseGreekLexicon(greekLexText);
+                    } else {
+                        console.warn('Greek lexicon not found at lexicons/strongsgreek.xml');
+                    }
+                } catch (lexError) {
+                    console.warn('Could not load Greek lexicon:', lexError);
+                }
+
+                // Update UI to show ready state
+                statusEl.textContent = "✅ All files loaded and parsed successfully! Ready to browse.";
+                statusEl.className = "success";
+                displayBtn.disabled = false; // Enable the search button
+                displayVerse();
+
+            } catch (error) {
+                statusEl.textContent = `❌ Error: ${error.message}`;
+                statusEl.className = "error";
+                console.error(error);
+            }
+        };
+
+        // Parsers
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            db.csv = {};
+            db.rootIndex = {};
+            for (let line of lines) {
+                if (!line.trim()) continue;
+                let parts = line.split('\t'); 
+                if (parts.length < 12) continue;
+                
+                let refMatch = parts[1].match(/\d+/g);
+                if (refMatch && refMatch.length >= 3) {
+                    let book = refMatch[1];
+                    let chapter = refMatch[2];
+                    let verse = refMatch[3];
+                    let key = `${book}-${chapter}-${verse}`;
+                    
+                    if (!db.csv[key]) db.csv[key] = [];
+                    const entry = {
+                        hebrew: parts[2],
+                        root: parts[5],
+                        translit: parts[4], 
+                        pos: parts[9],
+                        gloss: parts[10],
+                        english: parts[11]
+                    };
+                    db.csv[key].push(entry);
+                    if (entry.root) {
+                        db.rootIndex[entry.root] = db.rootIndex[entry.root] || new Set();
+                        db.rootIndex[entry.root].add(key);
+                    }
+                }
+            }
+        }
+
+        function parseXML(text, lang) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, "application/xml");
+            const segs = doc.getElementsByTagName("seg");
+            
+            db[lang] = {};
+            for (let seg of segs) {
+                if (seg.getAttribute("type") === "verse") {
+                    let id = seg.getAttribute("id"); 
+                    if (id) {
+                        db[lang][id] = seg.textContent.trim();
+                    }
+                }
+            }
+        }
+
+        function parseGreekLexicon(text) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, "application/xml");
+            const entries = doc.getElementsByTagName('entry');
+            for (let entry of entries) {
+                const strongsAttr = entry.getAttribute('strongs');
+                if (!strongsAttr) continue;
+                const strongs = String(Number(strongsAttr));
+                const greekElem = entry.querySelector('greek');
+                const pronunciationElem = entry.querySelector('pronunciation');
+                const defElem = entry.querySelector('strongs_def');
+                const greekText = greekElem ? (greekElem.getAttribute('unicode') || greekElem.getAttribute('translit') || '') : '';
+                const translitText = greekElem ? greekElem.getAttribute('translit') || '' : '';
+                const pronunciationText = pronunciationElem ? pronunciationElem.getAttribute('strongs') || '' : '';
+                const definitionText = defElem ? defElem.textContent.trim().replace(/\s+/g, ' ') : '';
+                db.greekRootInfo[strongs] = {
+                    strongs,
+                    greek: greekText,
+                    translit: translitText,
+                    pronunciation: pronunciationText,
+                    definition: definitionText
+                };
+            }
+        }
+
+        async function buildGreekRootIndex() {
+            if (greekRootIndexBuilt) return;
+            greekRootIndexBuilt = true;
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = '🔄 Building Greek root index from available Greek chapters...';
+            
+            for (let bookCode of Object.keys(greekBookMap)) {
+                const bookIndex = bookNames.indexOf(bookCode) + 1;
+                if (!bookIndex) continue;
+                const chapters = getBookChapters(bookIndex);
+                for (let chapter of chapters) {
+                    const chapterData = await loadGreekChapter(bookCode, chapter);
+                    if (!chapterData || !chapterData.verses) continue;
+                    for (let [verse, tokens] of Object.entries(chapterData.verses)) {
+                        const verseNum = Number(verse);
+                        if (!Number.isFinite(verseNum)) continue;
+                        const key = `${bookIndex}-${chapter}-${verseNum}`;
+                        if (!Array.isArray(tokens)) continue;
+                        tokens.forEach(token => {
+                            const strong = token && token.st ? String(Number(token.st)) : null;
+                            if (strong) {
+                                if (!db.greekRootIndex[strong]) db.greekRootIndex[strong] = new Set();
+                                db.greekRootIndex[strong].add(key);
+                            }
+                        });
+                    }
+                }
+            }
+            statusEl.textContent = '✅ Greek root index built. Click a Greek root to browse related verses.';
+            statusEl.className = 'success';
+        }
+
+        function getGreekRootLabel(strong) {
+            const info = db.greekRootInfo[String(Number(strong))] || {};
+            return info.greek || info.translit || `G${strong}`;
+        }
+
+        async function findGreekVersesByRoot(rootStrong) {
+            if (!rootStrong) return;
+            await buildGreekRootIndex();
+            const results = db.greekRootIndex[String(Number(rootStrong))] ? Array.from(db.greekRootIndex[String(Number(rootStrong))]) : [];
+            const container = document.getElementById('rootResultsContainer');
+            if (!results.length) {
+                container.innerHTML = `<div class="root-results"><h3>Greek root matches for “${escapeHtml(rootStrong)}”</h3><p>No verses found.</p></div>`;
+                return;
+            }
+
+            const sorted = results
+                .map(key => {
+                    const [book, chapter, verse] = key.split('-').map(Number);
+                    return { book, chapter, verse };
+                })
+                .sort((a, b) => a.book - b.book || a.chapter - b.chapter || a.verse - b.verse);
+
+            const info = db.greekRootInfo[String(Number(rootStrong))] || {};
+            let title = `Greek root ${escapeHtml(rootStrong)}`;
+            if (info.greek) title += ` — ${escapeHtml(info.greek)}`;
+            if (info.translit) title += ` (${escapeHtml(info.translit)})`;
+            if (info.definition) title += `: ${escapeHtml(info.definition)}`;
+
+            let html = `<div class="root-results"><h3>${title} (${sorted.length} verse${sorted.length === 1 ? '' : 's'})</h3><div class="root-list">`;
+            sorted.forEach(ref => {
+                const bookName = bookNames[ref.book - 1] || '??';
+                const xmlKey = `b.${bookName}.${ref.chapter}.${ref.verse}`;
+                const english = escapeHtml(db.en[xmlKey] || '');
+                html += `<button type="button" onclick="displayVerseAt(${ref.book}, ${ref.chapter}, ${ref.verse})">${bookName} ${ref.chapter}:${ref.verse}${english ? ' - ' + english : ''}</button>`;
+            });
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        async function loadGreekChapter(bookCode, chapter) {
+            const bookFolder = greekBookMap[bookCode];
+            if (!bookFolder) return null;
+
+            const cacheKey = `${bookCode}-${chapter}`;
+            if (greekCache[cacheKey]) {
+                return greekCache[cacheKey];
+            }
+
+            try {
+                const response = await fetch(`greek_nt_json/${bookFolder}/${chapter}.json`);
+                if (!response.ok) return null;
+                const data = await response.json();
+                greekCache[cacheKey] = data;
+                return data;
+            } catch (error) {
+                console.warn(`Could not load Greek chapter ${bookCode} ${chapter}:`, error);
+                return null;
+            }
+        }
+
+        function buildGreekInterlinearHtml(tokens) {
+            if (!Array.isArray(tokens)) return null;
+            let html = '<div class="greek-interlinear">';
+            tokens.forEach(token => {
+                const greek = token.gr || token.tl || "";
+                const english = token.en || "";
+                const pronunciation = token.tl || token.gr || "";
+                const punctuation = token.pu || "";
+                const strong = token && token.st ? String(Number(token.st)) : '';
+                const displayGreek = greek ? `${greek}${punctuation}` : punctuation;
+                const rootLabel = strong ? getGreekRootLabel(strong) : '';
+                const rootButton = strong ? `<button type="button" class="greek-root-button" onclick="findGreekVersesByRoot('${escapeHtml(strong)}')">${escapeHtml(rootLabel)}</button>` : '&nbsp;';
+                const rootInfo = strong && db.greekRootInfo[strong] ? db.greekRootInfo[strong].translit : '';
+                const infoButton = strong ? `<button type="button" class="greek-info-button" onclick="showGreekWordInfo('${escapeHtml(strong)}')">Info</button>` : '';
+
+                html += `
+                    <div class="greek-word">
+                        <div class="greek-glyph">${displayGreek}${infoButton}</div>
+                        <div class="greek-pronunciation">${pronunciation || '&nbsp;'}</div>
+                        <div class="greek-root">${rootButton}${rootInfo ? `<div style="font-size:12px; color:#5d6d7e;">${escapeHtml(rootInfo)}</div>` : ''}</div>
+                        <div class="greek-translation">${english || '&nbsp;'}</div>
+                    </div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        async function getGreekInterlinear(bookCode, chapter, verse) {
+            const chapterData = await loadGreekChapter(bookCode, chapter);
+            if (!chapterData || !chapterData.verses) return null;
+
+            const verseTokens = chapterData.verses[String(verse)] || chapterData.verses[verse];
+            return buildGreekInterlinearHtml(verseTokens);
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderHebrewInterlinear(words) {
+            let html = '<div class="hebrew-interlinear">';
+            words.forEach(word => {
+                const root = word.root || '';
+                const rootLabel = root ? `<button type="button" class="hebrew-root-button" data-root="${escapeHtml(root)}" onclick="findVersesByRoot('${escapeHtml(root)}')">${escapeHtml(root)}</button>` : '&nbsp;';
+                const rootInfoButton = root ? `<button type="button" class="hebrew-info-button" onclick="showHebrewWordInfo('${escapeHtml(root)}', '${escapeHtml(word.hebrew)}', '${escapeHtml(word.translit)}', '${escapeHtml(word.gloss)}', '${escapeHtml(word.pos)}')">Info</button>` : '';
+                html += `
+                    <div class="hebrew-word">
+                        <div class="hebrew-surface">${escapeHtml(word.hebrew)}</div>
+                        <div class="hebrew-root">${rootLabel}${rootInfoButton}</div>
+                        <div class="hebrew-gloss">${escapeHtml(word.english) || '&nbsp;'}</div>
+                    </div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function findVersesByRoot(root) {
+            if (!root) return;
+            const results = db.rootIndex[root] ? Array.from(db.rootIndex[root]) : [];
+            const container = document.getElementById('rootResultsContainer');
+            if (!results.length) {
+                container.innerHTML = `<div class="root-results"><h3>Root matches for “${escapeHtml(root)}”</h3><p>No verses found.</p></div>`;
+                return;
+            }
+
+            const sorted = results
+                .map(key => {
+                    const [book, chapter, verse] = key.split('-').map(Number);
+                    return { book, chapter, verse };
+                })
+                .sort((a, b) => a.book - b.book || a.chapter - b.chapter || a.verse - b.verse);
+
+            let html = `<div class="root-results"><h3>Verses containing root “${escapeHtml(root)}” (${sorted.length})</h3><div class="root-list">`;
+            sorted.forEach(ref => {
+                const bookName = bookNames[ref.book - 1] || '??';
+                const xmlKey = `b.${bookName}.${ref.chapter}.${ref.verse}`;
+                const english = escapeHtml(db.en[xmlKey] || '');
+                html += `<button type="button" onclick="displayVerseAt(${ref.book}, ${ref.chapter}, ${ref.verse})">${bookName} ${ref.chapter}:${ref.verse}${english ? ' - ' + english : ''}</button>`;
+            });
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        function displayVerseAt(bookIndex, chapter, verse) {
+            bookSelect.value = bookIndex;
+            document.getElementById('chapterInput').value = chapter;
+            document.getElementById('verseInput').value = verse;
+            displayVerse(verse);
+        }
+
+        function displayInfoPanel(title, detailsHtml) {
+            const container = document.getElementById('infoPanelContainer');
+            container.innerHTML = `
+                <div class="info-panel">
+                    <h3>${escapeHtml(title)}</h3>
+                    ${detailsHtml}
+                </div>`;
+        }
+
+        function clearInfoPanel() {
+            document.getElementById('infoPanelContainer').innerHTML = '';
+        }
+
+        function showGreekWordInfo(strong) {
+            if (!strong) return;
+            const info = db.greekRootInfo[String(Number(strong))] || {};
+            let details = '<dl>';
+            details += `<dt>Strong's Number</dt><dd>${escapeHtml(strong)}</dd>`;
+            if (info.greek) details += `<dt>Greek</dt><dd>${escapeHtml(info.greek)}</dd>`;
+            if (info.translit) details += `<dt>Transliteration</dt><dd>${escapeHtml(info.translit)}</dd>`;
+            if (info.pronunciation) details += `<dt>Pronunciation</dt><dd>${escapeHtml(info.pronunciation)}</dd>`;
+            if (info.definition) details += `<dt>Definition</dt><dd>${escapeHtml(info.definition)}</dd>`;
+            details += `<dt>Search</dt><dd><button type="button" class="greek-root-button" onclick="findGreekVersesByRoot('${escapeHtml(strong)}')">Find related verses</button></dd>`;
+            details += '</dl>';
+            displayInfoPanel(`Greek lexicon entry for G${escapeHtml(strong)}`, details);
+        }
+
+        function showHebrewWordInfo(root, hebrew, translit, gloss, pos) {
+            if (!root) return;
+            let details = '<dl>';
+            details += `<dt>Root</dt><dd>${escapeHtml(root)}</dd>`;
+            if (hebrew) details += `<dt>Hebrew</dt><dd>${escapeHtml(hebrew)}</dd>`;
+            if (translit) details += `<dt>Transliteration</dt><dd>${escapeHtml(translit)}</dd>`;
+            if (pos) details += `<dt>Part of Speech</dt><dd>${escapeHtml(pos)}</dd>`;
+            if (gloss) details += `<dt>Gloss</dt><dd>${escapeHtml(gloss)}</dd>`;
+            details += `<dt>Search</dt><dd><button type="button" class="hebrew-root-button" onclick="findVersesByRoot('${escapeHtml(root)}')">Find verses with this root</button></dd>`;
+            details += '</dl>';
+            displayInfoPanel(`Hebrew root details for ${escapeHtml(root)}`, details);
+        }
+
+        // Display Logic
+        function getBookChapters(bookIndex) {
+            const bName = bookNames[bookIndex - 1];
+            const prefix = `b.${bName}.`;
+            return [...new Set(Object.keys(db.en)
+                .filter(key => key.startsWith(prefix))
+                .map(key => Number(key.split('.')[2]))
+                .filter(Number.isFinite))]
+                .sort((a, b) => a - b);
+        }
+
+        function getChapterVerses(bookIndex, chapter) {
+            const bName = bookNames[bookIndex - 1];
+            const prefix = `b.${bName}.${chapter}.`;
+            return Object.keys(db.en)
+                .filter(key => key.startsWith(prefix))
+                .map(key => Number(key.split('.').pop()))
+                .filter(Number.isFinite)
+                .sort((a, b) => a - b);
+        }
+
+        function renderBookGrid(selectedBook) {
+            const container = document.getElementById('bookGridContainer');
+            let html = `<div class="lang-label">Select Book</div><div class="book-grid">`;
+            bookNames.forEach((name, index) => {
+                const value = index + 1;
+                const activeClass = value === selectedBook ? 'active' : '';
+                html += `<button type="button" class="${activeClass}" onclick="selectBook(${value})">${name}</button>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function renderChapterButtons(bookIndex, selectedChapter) {
+            const container = document.getElementById('chapterButtonContainer');
+            const chapters = getBookChapters(bookIndex);
+            let html = `<div class="lang-label">Select Chapter</div>`;
+            if (chapters.length === 0) {
+                html += `<p style="margin-top: 10px; color: #e74c3c;">No chapter data available for ${bookNames[bookIndex - 1]}.</p>`;
+            } else {
+                html += `<div class="chapter-buttons">`;
+                chapters.forEach(chapter => {
+                    const activeClass = String(chapter) === String(selectedChapter) ? 'active' : '';
+                    html += `<button type="button" class="${activeClass}" onclick="selectChapter(${chapter})">${chapter}</button>`;
+                });
+                html += `</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderChapterGrid(bookIndex, chapter, selectedVerse) {
+            const gridContainer = document.getElementById('chapterGridContainer');
+            const verses = getChapterVerses(bookIndex, chapter);
+            let html = `<div class="lang-label">Chapter ${chapter} Verse Grid</div>`;
+
+            if (verses.length === 0) {
+                html += `<p style="margin-top: 10px; color: #e74c3c;">No verses found for ${bookNames[bookIndex - 1]} ${chapter}.</p>`;
+            } else {
+                html += `<div class="chapter-grid">`;
+                verses.forEach(num => {
+                    const activeClass = String(num) === String(selectedVerse) ? 'active' : '';
+                    html += `<button type="button" class="${activeClass}" onclick="displayVerse(${num})">${num}</button>`;
+                });
+                html += `</div>`;
+            }
+
+            gridContainer.innerHTML = html;
+        }
+
+        function selectBook(bookIndex) {
+            bookSelect.value = bookIndex;
+            const chapters = getBookChapters(bookIndex);
+            const firstChapter = chapters.length ? chapters[0] : 1;
+            document.getElementById('chapterInput').value = firstChapter;
+            document.getElementById('verseInput').value = 1;
+            renderBookGrid(bookIndex);
+            renderChapterButtons(bookIndex, firstChapter);
+            displayVerse(1);
+        }
+
+        function selectChapter(chapter) {
+            const bookIndex = parseInt(bookSelect.value, 10);
+            document.getElementById('chapterInput').value = chapter;
+            document.getElementById('verseInput').value = 1;
+            renderChapterButtons(bookIndex, chapter);
+            displayVerse(1);
+        }
+
+        async function displayVerse(selectedVerse = null) {
+            const bIdx = parseInt(bookSelect.value, 10);
+            const bName = bookNames[bIdx - 1];
+            const c = document.getElementById('chapterInput').value;
+            const v = selectedVerse || document.getElementById('verseInput').value;
+
+            document.getElementById('verseInput').value = v;
+            renderBookGrid(bIdx);
+            renderChapterButtons(bIdx, c);
+            renderChapterGrid(bIdx, c, v);
+
+            const csvKey = `${bIdx}-${c}-${v}`;
+            const xmlKey = `b.${bName}.${c}.${v}`;
+
+            let html = `<h2>${bName} ${c}:${v}</h2>`;
+            const enText = db.en[xmlKey] || "<em>English verse not found in XML</em>";
+            const plText = db.pl[xmlKey] || "<em>Polish verse not found in XML</em>";
+            const greekText = await getGreekInterlinear(bName, c, v) || "<em>Greek verse not found</em>";
+
+            html += `
+                <div class="verse-text">
+                    <div class="lang-label">English</div>
+                    <div>${enText}</div>
+                </div>
+                <div class="verse-text">
+                    <div class="lang-label">Polish</div>
+                    <div>${plText}</div>
+                </div>
+                <div class="verse-text">
+                    <div class="lang-label">Greek Interlinear</div>
+                    <div class="greek-text">${greekText}</div>
+                </div>
+            `;
+
+            const words = db.csv[csvKey];
+            if (words && words.length > 0) {
+                html += `<div class="lang-label" style="margin-top: 30px;">Hebrew Interlinear</div>`;
+                html += renderHebrewInterlinear(words);
+                html += `<div class="lang-label" style="margin-top: 20px;">Original Language Breakdown</div>`;
+                html += `<table class="word-table">
+                    <tr>
+                        <th>Hebrew / Original</th>
+                        <th>Root</th>
+                        <th>Transliteration</th>
+                        <th>Part of Speech</th>
+                        <th>Gloss</th>
+                        <th>English Word</th>
+                    </tr>`;
+                words.forEach(w => {
+                    html += `<tr>
+                        <td class="hebrew">${w.hebrew}</td>
+                        <td>${w.root || ''}</td>
+                        <td>${w.translit}</td>
+                        <td>${w.pos}</td>
+                        <td>${w.gloss}</td>
+                        <td>${w.english}</td>
+                    </tr>`;
+                });
+                html += `</table>`;
+            } else {
+                html += `<p style="color: #e74c3c; margin-top:20px;">No original language structural data found for this verse in the CSV.</p>`;
+            }
+
+            document.getElementById('verseDetailContainer').innerHTML = html;
+        }
+
+        bookSelect.addEventListener('change', () => displayVerse());
+        document.getElementById('chapterInput').addEventListener('change', () => displayVerse());
+    </script>
+</body>
+</html>
