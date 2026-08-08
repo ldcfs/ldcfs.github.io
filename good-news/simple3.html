@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPA Tree-Based Progressive Tasks</title>
+    <style>
+        /* Reset and Base Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Container for SPA content */
+        .spa-container {
+            margin: 40px 20px;
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1000px;
+        }
+
+        /* Circular Div - Initially hidden off-screen (top) */
+        .circle-div {
+            width: 130px;
+            height: 130px;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            top: -200px;
+            opacity: 0;
+            transition: transform 0.3s ease;
+            user-select: none;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .circle-div:hover {
+            transform: scale(1.08);
+        }
+
+        .circle-label {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 13px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .circle-status {
+            color: #fffacd;
+            font-size: 10px;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Class to trigger slide down */
+        .circle-div.slide-down {
+            animation: slideDownAnim 0.8s forwards cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes slideDownAnim {
+            0% {
+                top: -200px;
+                opacity: 0;
+            }
+            100% {
+                top: 0;
+                opacity: 1;
+            }
+        }
+
+        /* Fullscreen Popup Window */
+        .popup-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        .popup-window.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+
+        .close-btn:hover {
+            background-color: #ff6b81;
+        }
+
+        .popup-content {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        .popup-content h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .popup-content p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .complete-btn {
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+
+        .complete-btn:hover {
+            background-color: #26af5f;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Container where dynamic tasks/circles will appear -->
+    <div id="spaContainer" class="spa-container"></div>
+
+    <!-- Fullscreen Popup Window -->
+    <div id="popupWindow" class="popup-window">
+        <button class="close-btn" onclick="closePopup()">Close</button>
+        <div class="popup-content">
+            <h1 id="popupTitle">Task Title</h1>
+            <p id="popupDescription">Task description goes here...</p>
+            <button id="completeBtn" class="complete-btn" onclick="completeCurrentTask()">Complete Task</button>
+        </div>
+    </div>
+
+    <script>
+        // Tree-based task database with 20 nodes specifying precise child/successor mappings
+        const tasks = {
+            1: { id: 1, title: "1. Awakening", description: "Take your first step into the expansive system landscape.", unlocked: true, completed: false, children: [2, 3] },
+            
+            2: { id: 2, title: "2A. Logic Core", description: "Build branching pathways using conditional algorithms.", unlocked: false, completed: false, children: [4, 5] },
+            3: { id: 3, title: "2B. Visuals", description: "Explore layout engines and styling paradigms.", unlocked: false, completed: false, children: [6, 7] },
+
+            4: { id: 4, title: "3A1. Bitwise", description: "Handle low-level operator expressions safely.", unlocked: false, completed: false, children: [8, 9] },
+            5: { id: 5, title: "3A2. States", description: "Manage component reactivity loops efficiently.", unlocked: false, completed: false, children: [10, 11] },
+            6: { id: 6, title: "3B1. Vectors", description: "Work with scalable canvas assets and transformations.", unlocked: false, completed: false, children: [12, 13] },
+            7: { id: 7, title: "3B2. Shaders", description: "Experiment with custom visual filters and rendering pipelines.", unlocked: false, completed: false, children: [14, 15] },
+
+            8: { id: 8, title: "4A. Masking", description: "Filter data streams using bitmask masks.", unlocked: false, completed: false, children: [16] },
+            9: { id: 9, title: "4B. Pointers", description: "Optimize memory pointers and references.", unlocked: false, completed: false, children: [16] },
+            10: { id: 10, title: "4C. Context", description: "Share application state across deep component trees.", unlocked: false, completed: false, children: [17] },
+            11: { id: 11, title: "4D. Redux", description: "Centralize predictable action patterns.", unlocked: false, completed: false, children: [17] },
+            12: { id: 12, title: "4E. Paths", description: "Calculate complex geometric bezier curves.", unlocked: false, completed: false, children: [18] },
+            13: { id: 13, title: "4F. Meshes", description: "Render multi-point polygon layouts.", unlocked: false, completed: false, children: [18] },
+            14: { id: 14, title: "4G. Passes", description: "Chain multi-stage post-processing filters.", unlocked: false, completed: false, children: [19] },
+            15: { id: 15, title: "4H. Audio", description: "Synchronize visual loops with dynamic sound frequencies.", unlocked: false, completed: false, children: [19] },
+
+            16: { id: 16, title: "5A. Systems", description: "Integrate low-level architecture layers.", unlocked: false, completed: false, children: [20] },
+            17: { id: 17, title: "5B. Flux", description: "Establish scalable asynchronous data flows.", unlocked: false, completed: false, children: [20] },
+            18: { id: 18, title: "5C. Engine", description: "Structure custom rendering loops.", unlocked: false, completed: false, children: [20] },
+            19: { id: 19, title: "5D. Synthesizer", description: "Build automated procedural audio generators.", unlocked: false, completed: false, children: [20] },
+
+            20: { id: 20, title: "6. Mastery", description: "Reach the zenith of the progressive mastery graph.", unlocked: false, completed: false, children: [] }
+        };
+
+        let activePopupTaskId = null;
+
+        // Initialize SPA and render unlocked nodes
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTasks();
+        });
+
+        // Function to render all unlocked circles dynamically
+        function renderTasks() {
+            const container = document.getElementById('spaContainer');
+            container.innerHTML = ''; // Clear container
+
+            let index = 0;
+            // Iterate over all tasks in the master registry
+            for (const id in tasks) {
+                const task = tasks[id];
+
+                if (task.unlocked) {
+                    const circleDiv = document.createElement('div');
+                    circleDiv.className = 'circle-div';
+                    circleDiv.id = `task-circle-${task.id}`;
+                    
+                    let statusText = task.completed ? 'Completed' : 'Available';
+                    
+                    circleDiv.innerHTML = `
+                        <span class="circle-label">${task.title}</span>
+                        <span class="circle-status">${statusText}</span>
+                    `;
+
+                    // Adjust background style if completed
+                    if (task.completed) {
+                        circleDiv.style.background = 'linear-gradient(135deg, #2ed573, #7bed9f)';
+                    } else {
+                        circleDiv.style.background = 'linear-gradient(135deg, #ff7e5f, #feb47b)';
+                    }
+
+                    // Click event to open popup
+                    circleDiv.onclick = () => openPopup(task.id);
+
+                    container.appendChild(circleDiv);
+
+                    // Staggered slide down animation for clean presentation
+                    const currentDelay = index * 40;
+                    setTimeout(() => {
+                        circleDiv.classList.add('slide-down');
+                    }, currentDelay);
+
+                    index++;
+                }
+            }
+        }
+
+        // Open popup with specific task data, zooming from center
+        function openPopup(taskId) {
+            activePopupTaskId = taskId;
+            const task = tasks[taskId];
+
+            document.getElementById('popupTitle').innerText = task.title;
+            document.getElementById('popupDescription').innerText = task.description;
+            
+            const completeBtn = document.getElementById('completeBtn');
+            if (task.completed) {
+                completeBtn.style.display = 'none'; // Hide if already finished
+            } else {
+                completeBtn.style.display = 'inline-block';
+            }
+
+            const popup = document.getElementById('popupWindow');
+            popup.classList.add('active');
+        }
+
+        // Close popup window
+        function closePopup() {
+            const popup = document.getElementById('popupWindow');
+            popup.classList.remove('active');
+        }
+
+        // Complete current task and unlock all its direct children paths
+        function completeCurrentTask() {
+            const task = tasks[activePopupTaskId];
+            if (task) {
+                task.completed = true;
+
+                // Unlock all mapped child tasks in the tree network
+                task.children.forEach(childId => {
+                    if (tasks[childId]) {
+                        tasks[childId].unlocked = true;
+                    }
+                });
+            }
+
+            closePopup();
+
+            // Re-render layout to introduce newly unlocked nodes smoothly
+            setTimeout(renderTasks, 300);
+        }
+    </script>
+
+</body>
+</html>
