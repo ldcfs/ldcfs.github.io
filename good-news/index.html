@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimal SPA (Fetch)</title>
+  <style>
+    :root {
+      --bg: #f9f9f9;
+      --text: #222;
+      --accent: #0066cc;
+    }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    nav {
+      padding: 1rem 2rem;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      gap: 1.5rem;
+    }
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    nav a:hover {
+      color: var(--accent);
+    }
+    main {
+      flex: 1;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#good">Good</a>
+    <a href="#god">God</a>
+    <a href="#way">Way</a>
+  </nav>
+
+  <!-- Container where fetched HTML will be injected -->
+  <main id="app">Loading...</main>
+
+  <script>
+    // Map URL hashes to external HTML files
+    const routes = {
+      '': 'good.html',
+      '#good': 'good.html',
+      '#god': 'god.html',
+      '#way': 'way.html'
+    };
+
+    const app = document.getElementById('app');
+
+    async function loadContent() {
+      const hash = window.location.hash;
+      const file = routes[hash] || 'good.html';
+
+      try {
+        const response = await fetch(file);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        const html = await response.text();
+        app.innerHTML = html;
+      } catch (error) {
+        app.innerHTML = `<h1>404</h1><p>Page could not be loaded.</p>`;
+      }
+    }
+
+    window.addEventListener('hashchange', loadContent);
+    window.addEventListener('DOMContentLoaded', loadContent);
+  </script>
+
+</body>
+</html>
