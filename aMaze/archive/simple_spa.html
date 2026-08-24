@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> gMine </title>
+    <!-- Web App Manifest embedded or linked via data-uri/external file -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22SPA%20Progressive%20Mastery%22%2C%22short_name%22%3A%22Mastery%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a1a1a%22%2C%22theme_color%22%3A%22%232ed573%22%7D">
+    
+    <style>
+        /* Reset and Base Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Navbar & Status Bar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            background-color: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 10px;
+            box-sizing: border-box;
+            z-index: 900;
+            color: #fff;
+        }
+
+        .nav-brand {
+            font-weight: bold;
+            font-size: 18px;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-status {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .nav-status span strong {
+            color: #2ed573;
+        }
+
+        .reset-btn {
+            background-color: transparent;
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background-color: #ff4757;
+            color: white;
+        }
+
+        /* Container for SPA content */
+        .spa-container {
+            margin: 40px 20px;
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1000px;
+        }
+
+        /* Circular Div - Initially hidden off-screen (top) */
+        .circle-div {
+            width: 130px;
+            height: 130px;
+            /* background: linear-gradient(135deg, #ff7e5f, #feb47b); */
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(221, 221, 221, 0.3);
+            position: relative;
+            top: -200px;
+            opacity: 0;
+            transition: transform 0.3s ease;
+            user-select: none;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .circle-div:hover {
+            transform: scale(1.08);
+        }
+
+        .circle-label {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 13px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .circle-status {
+            color: #fffacd;
+            font-size: 10px;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Class to trigger slide down */
+        .circle-div.slide-down {
+            animation: slideDownAnim 0.8s forwards cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes slideDownAnim {
+            0% {
+                top: -200px;
+                opacity: 0;
+            }
+            100% {
+                top: 0;
+                opacity: 1;
+            }
+        }
+
+        /* Fullscreen Popup Window */
+        .popup-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            z-index: 1000;
+            
+            /* Replaced scale(0) with clean opacity & smooth clip-path zoom from center */
+            opacity: 0;
+            visibility: hidden;
+            clip-path: circle(0% at 50% 50%);
+            transition: clip-path 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
+            
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 20px 40px 20px;
+            box-sizing: border-box;
+        }
+
+        .popup-window.active {
+            opacity: 1;
+            visibility: visible;
+            clip-path: circle(150% at 50% 50%);
+        }
+
+        .close-btn {
+            position: fixed; /* Fixed so it stays visible while scrolling */
+            top: 30px;
+            right: 40px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1001;
+            transition: background-color 0.2s;
+        }
+
+        .close-btn:hover {
+            background-color: #ff6b81;
+        }
+
+        .popup-content {
+            text-align: left; /* Align readable content properly for long text */
+            max-width: 700px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .complete-btn {
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            margin: 30px auto 0 auto; /* Centered block button */
+            display: block;
+            transition: background-color 0.2s;
+        }
+
+        .complete-btn:hover {
+            background-color: #26af5f;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar & Status Bar -->
+    <header class="navbar">
+        <div class="nav-brand">gMine</div>
+        <div class="nav-status">
+            <span>Completed: <strong id="completedCount">0</strong> / <span id="totalCount">0</span></span>
+            <span>Unlocked: <strong id="unlockedCount">0</strong></span>
+        </div>
+        <button class="reset-btn" onclick="resetProgress()">Reset</button>
+    </header>
+
+    <!-- Container where dynamic tasks/circles will appear -->
+    <div id="spaContainer" class="spa-container"></div>
+
+    <!-- Fullscreen Popup Window -->
+    <div id="popupWindow" class="popup-window">
+        <button class="close-btn" onclick="closePopup()">Close</button>
+        <div class="popup-content" id="popupContainerBody"></div>
+    </div>
+
+    <script>
+        let tasks = {};
+        let activePopupTaskId = null;
+
+        // Initialize SPA: Load metadata configuration from external file & restore user state
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadTaskManifest();
+            loadProgressFromStorage();
+            renderTasks();
+            updateStatusBar();
+        });
+
+        // Load graph structure from external json file
+        async function loadTaskManifest() {
+            try {
+                const response = await fetch('tasks-manifest.json');
+                if (!response.ok) throw new Error('Could not load manifest');
+                tasks = await response.json();
+            } catch (error) {
+                // Fallback built-in tree configuration if tasks-manifest.json isn't present locally yet
+                tasks = {
+                    1: { id: 1, title: "1. Awakening", contentUrl: "task1.html", unlocked: true, completed: false, children: [2, 3] },
+                    2: { id: 2, title: "2A. Logic Core", contentUrl: "task2.html", unlocked: false, completed: false, children: [4, 5] },
+                    3: { id: 3, title: "2B. Visuals", contentUrl: "task3.html", unlocked: false, completed: false, children: [6, 7] },
+                    4: { id: 4, title: "3A1. Bitwise", contentUrl: "task4.html", unlocked: false, completed: false, children: [8, 9] },
+                    5: { id: 5, title: "3A2. States", contentUrl: "task5.html", unlocked: false, completed: false, children: [10, 11] },
+                    6: { id: 6, title: "3B1. Vectors", contentUrl: "task6.html", unlocked: false, completed: false, children: [12, 13] },
+                    7: { id: 7, title: "3B2. Shaders", contentUrl: "task7.html", unlocked: false, completed: false, children: [14, 15] },
+                    8: { id: 8, title: "4A. Masking", contentUrl: "task8.html", unlocked: false, completed: false, children: [16] },
+                    9: { id: 9, title: "4B. Pointers", contentUrl: "task9.html", unlocked: false, completed: false, children: [16] },
+                    10: { id: 10, title: "4C. Context", contentUrl: "task10.html", unlocked: false, completed: false, children: [17] },
+                    11: { id: 11, title: "4D. Redux", contentUrl: "task11.html", unlocked: false, completed: false, children: [17] },
+                    12: { id: 12, title: "4E. Paths", contentUrl: "task12.html", unlocked: false, completed: false, children: [18] },
+                    13: { id: 13, title: "4F. Meshes", contentUrl: "task13.html", unlocked: false, completed: false, children: [18] },
+                    14: { id: 14, title: "4G. Passes", contentUrl: "task14.html", unlocked: false, completed: false, children: [19] },
+                    15: { id: 15, title: "4H. Audio", contentUrl: "task15.html", unlocked: false, completed: false, children: [19] },
+                    16: { id: 16, title: "5A. Systems", contentUrl: "task16.html", unlocked: false, completed: false, children: [20] },
+                    17: { id: 17, title: "5B. Flux", contentUrl: "task17.html", unlocked: false, completed: false, children: [20] },
+                    18: { id: 18, title: "5C. Engine", contentUrl: "task18.html", unlocked: false, completed: false, children: [20] },
+                    19: { id: 19, title: "5D. Synthesizer", contentUrl: "task19.html", unlocked: false, completed: false, children: [20] },
+                    20: { id: 20, title: "6. Mastery", contentUrl: "task20.html", unlocked: false, completed: false, children: [] }
+                };
+            }
+        }
+
+        // Browser Storage Integration: Save progression state
+        function saveProgressToStorage() {
+            const state = {};
+            for (const id in tasks) {
+                state[id] = {
+                    unlocked: tasks[id].unlocked,
+                    completed: tasks[id].completed
+                };
+            }
+            localStorage.setItem('spa_task_progress', JSON.stringify(state));
+        }
+
+        // Browser Storage Integration: Restore progression state
+        function loadProgressFromStorage() {
+            const savedState = localStorage.getItem('spa_task_progress');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                for (const id in state) {
+                    if (tasks[id]) {
+                        tasks[id].unlocked = state[id].unlocked;
+                        tasks[id].completed = state[id].completed;
+                    }
+                }
+            }
+        }
+
+        // Reset system progress completely
+        function resetProgress() {
+            if (confirm("Are you sure you want to reset all your progress?")) {
+                localStorage.removeItem('spa_task_progress');
+                location.reload();
+            }
+        }
+
+        // Update top status bar metrics
+        function updateStatusBar() {
+            const total = Object.keys(tasks).length;
+            let completed = 0;
+            let unlocked = 0;
+
+            for (const id in tasks) {
+                if (tasks[id].completed) completed++;
+                if (tasks[id].unlocked) unlocked++;
+            }
+
+            document.getElementById('totalCount').innerText = total;
+            document.getElementById('completedCount').innerText = completed;
+            document.getElementById('unlockedCount').innerText = unlocked;
+        }
+
+        // Function to render all unlocked circles dynamically
+        function renderTasks() {
+            const container = document.getElementById('spaContainer');
+            container.innerHTML = '';
+
+            let index = 0;
+            for (const id in tasks) {
+                const task = tasks[id];
+
+                if (task.unlocked) {
+                    const circleDiv = document.createElement('div');
+                    circleDiv.className = 'circle-div';
+                    circleDiv.id = `task-circle-${task.id}`;
+                    
+                    let statusText = task.completed ? 'Completed' : 'Available';
+                    
+                    circleDiv.innerHTML = `
+                        <span class="circle-label">${task.title}</span>
+                        <span class="circle-status">${statusText}</span>
+                    `;
+
+                    if (task.completed) {
+                        circleDiv.style.background = '#555';
+                    } else {
+                        circleDiv.style.background = '#000';
+                    }
+
+                    circleDiv.onclick = () => openPopup(task.id);
+                    container.appendChild(circleDiv);
+
+                    const currentDelay = index * 40;
+                    setTimeout(() => {
+                        circleDiv.classList.add('slide-down');
+                    }, currentDelay);
+
+                    index++;
+                }
+            }
+            updateStatusBar();
+        }
+
+        // Fetch external HTML file content and display it inside the popup
+        async function openPopup(taskId) {
+            activePopupTaskId = taskId;
+            const task = tasks[taskId];
+            const contentContainer = document.getElementById('popupContainerBody');
+            
+            // Reset scroll to top every time a new popup opens
+            const popup = document.getElementById('popupWindow');
+            popup.scrollTop = 0;
+
+            contentContainer.innerHTML = '<p>Loading content...</p>';
+
+            try {
+                const response = await fetch(task.contentUrl);
+                if (!response.ok) throw new Error('Failed to load external file');
+                
+                const htmlContent = await response.text();
+                contentContainer.innerHTML = htmlContent;
+
+                if (!task.completed) {
+                    const btn = document.createElement('button');
+                    btn.className = 'complete-btn';
+                    btn.innerText = 'Complete Task';
+                    btn.onclick = completeCurrentTask;
+                    contentContainer.appendChild(btn);
+                }
+            } catch (error) {
+                // Fallback simulation card if external HTML files are missing
+                contentContainer.innerHTML = `
+                    <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; border: 1px solid #e1e4e8; width: 100%; box-sizing: border-box;">
+                        <h2 style="color: #24292e; margin-top: 0;">${task.title}</h2>
+                        <p style="color: #586069; line-height: 1.6;">Could not load external file (<code>${task.contentUrl}</code>). Make sure you are running via a local development server so file fetches work correctly.</p>
+                        <hr style="border: none; border-top: 1px solid #e1e4e8; margin: 20px 0;">
+                        <p style="color: #24292e;">Simulated content block. Complete this objective to proceed down the dependency tree.</p>
+                    </div>
+                `;
+                if (!task.completed) {
+                    const btn = document.createElement('button');
+                    btn.className = 'complete-btn';
+                    btn.innerText = 'Complete Task';
+                    btn.onclick = completeCurrentTask;
+                    contentContainer.appendChild(btn);
+                }
+            }
+
+            popup.classList.add('active');
+        }
+
+        // Close popup window
+        function closePopup() {
+            const popup = document.getElementById('popupWindow');
+            popup.classList.remove('active');
+        }
+
+        // Complete current task, persist state changes, and unlock children nodes
+        function completeCurrentTask() {
+            const task = tasks[activePopupTaskId];
+            if (task) {
+                task.completed = true;
+
+                task.children.forEach(childId => {
+                    if (tasks[childId]) {
+                        tasks[childId].unlocked = true;
+                    }
+                });
+            }
+
+            saveProgressToStorage();
+            closePopup();
+            setTimeout(renderTasks, 300);
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>gMine Directory</title>
+    <link rel="manifest"
+        href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22SPA%20Progressive%20Mastery%22%2C%22short_name%22%3A%22Mastery%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a1a1a%22%2C%22theme_color%22%3A%22%232ed573%22%7D">
+
+    <style>
+        /* Reset and Base Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Navbar & Status Bar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            background-color: rgba(26, 26, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            z-index: 900;
+            color: #fff;
+        }
+
+        .nav-brand {
+            font-weight: bold;
+            font-size: 18px;
+            background: linear-gradient(135deg, #ffdd5f, #fffb77);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-status {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .nav-status span strong {
+            color: #2ed573;
+        }
+
+        .reset-btn {
+            background-color: transparent;
+            border: 1px solid #ff4757;
+            color: #ff4757;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background-color: #ff4757;
+            color: white;
+        }
+
+        /* Container */
+        .spa-container {
+            margin: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 1000px;
+            width: 100%;
+            gap: 25px;
+        }
+
+        /* Interactive Breadcrumb Bar */
+        .view-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 20px;
+            box-sizing: border-box;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-family: monospace;
+            color: #feb47b;
+            flex-wrap: wrap;
+        }
+
+        .crumb-item {
+            cursor: pointer;
+            text-decoration: underline;
+            color: #feb47b;
+        }
+
+        .crumb-item:hover {
+            color: #fff;
+        }
+
+        .crumb-active {
+            color: #fff;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: default;
+        }
+
+        .back-btn {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 6px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background-color: #555;
+        }
+
+        /* Content Sections */
+        .block-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .block-title {
+            font-size: 13px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .grid-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            width: 100%;
+        }
+
+        /* Circle Nodes */
+        .circle-div {
+            width: 125px;
+            height: 125px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+            transition: all 0.25s ease;
+            user-select: none;
+            text-align: center;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 2px solid #444;
+            background: #222;
+        }
+
+        .circle-div:hover {
+            transform: scale(1.08);
+            border-color: #777;
+        }
+
+        .circle-div.folder {
+            border-color: #00a8ff;
+            background: #111e2e;
+        }
+
+        .circle-div.folder.completed-folder {
+            border-color: #ffdd5f;
+            background: #3b3210;
+        }
+
+        .circle-div.locked {
+            cursor: not-allowed;
+            opacity: 0.35;
+            border-style: dashed !important;
+            background: #151515 !important;
+            border-color: #444 !important;
+        }
+
+        .circle-div.locked:hover {
+            transform: scale(1);
+        }
+
+        .circle-label {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 12px;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .circle-status {
+            color: #aaa;
+            font-size: 10px;
+            margin-top: 6px;
+            text-transform: uppercase;
+        }
+
+        /* Popup Modal */
+        .popup-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            clip-path: circle(0% at 50% 50%);
+            transition: clip-path 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 80px 20px 40px 20px;
+            box-sizing: border-box;
+        }
+
+        .popup-window.active {
+            opacity: 1;
+            visibility: visible;
+            clip-path: circle(150% at 50% 50%);
+        }
+
+        .close-btn {
+            position: fixed;
+            top: 30px;
+            right: 40px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+        }
+
+        .popup-content {
+            text-align: left;
+            max-width: 700px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .complete-btn {
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 30px auto 0 auto;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="navbar">
+        <div class="nav-brand">gMine</div>
+        <div class="nav-status">
+            <span>Completed: <strong id="completedCount">0</strong> / <span id="totalCount">0</span></span>
+            <span>Unlocked: <strong id="unlockedCount">0</strong></span>
+        </div>
+        <button class="reset-btn" onclick="resetProgress()">Reset</button>
+    </header>
+
+    <div id="spaContainer" class="spa-container"></div>
+
+    <div id="popupWindow" class="popup-window">
+        <button class="close-btn" onclick="closePopup()">Close</button>
+        <div class="popup-content" id="popupContainerBody"></div>
+    </div>
+
+    <script>
+        const ROOT_PATH = 'teachings';
+        let currentPath = ROOT_PATH; // Active folder directory
+        let tasks = {};
+        let activePopupTaskId = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadTaskManifest();
+            loadProgressFromStorage();
+            evaluateAvailability();
+            render();
+            updateStatusBar();
+        });
+
+        async function loadTaskManifest() {
+            try {
+                const response = await fetch('/api/tasks');
+                if (!response.ok) throw new Error('Could not load manifest');
+                tasks = await response.json();
+            } catch (error) {
+                console.error("Using fallback manifest:", error);
+                // Demonstration task tree:
+                // teachings/
+                // ├── 01 Course Intro (Task)
+                // ├── Chapter 1 (Subdirectory)
+                // │   ├── 01 Chapter 1 Overview (Task)
+                // │   └── Basics (Subdirectory)
+                // │       ├── 01 Syntax Guide (Task)
+                // │       └── 02 Practice (Task)
+                // └── Chapter 2 (Subdirectory)
+                //     └── 01 Module Intro (Task)
+                tasks = {
+                    1: { id: 1, title: "01 Course Intro", contentUrl: "teachings/intro.html", dir: "teachings", completed: false },
+                    2: { id: 2, title: "01 Chapter 1 Overview", contentUrl: "teachings/Chapter 1/overview.html", dir: "teachings/Chapter 1", completed: false },
+                    3: { id: 3, title: "01 Syntax Guide", contentUrl: "teachings/Chapter 1/Basics/syntax.html", dir: "teachings/Chapter 1/Basics", completed: false },
+                    4: { id: 4, title: "02 Practice", contentUrl: "teachings/Chapter 1/Basics/practice.html", dir: "teachings/Chapter 1/Basics", completed: false },
+                    5: { id: 5, title: "01 Module Intro", contentUrl: "teachings/Chapter 2/mod.html", dir: "teachings/Chapter 2", completed: false }
+                };
+            }
+        }
+
+        // Progression/unlock status logic across directory tree
+        function evaluateAvailability() {
+            const allTaskList = Object.values(tasks);
+
+            allTaskList.sort((a, b) => {
+                const dirA = (a.dir || ROOT_PATH).toLowerCase();
+                const dirB = (b.dir || ROOT_PATH).toLowerCase();
+                if (dirA !== dirB) return dirA.localeCompare(dirB);
+                return a.title.localeCompare(b.title);
+            });
+
+            allTaskList.forEach((task, index) => {
+                if (index === 0) {
+                    task.unlocked = true;
+                } else {
+                    task.unlocked = allTaskList.slice(0, index).every(t => t.completed);
+                }
+            });
+        }
+
+        // Returns ONLY immediate subdirectories and ONLY tasks directly inside targetPath
+        function getDirectoryContents(targetPath) {
+            const subdirs = new Set();
+            const directTasks = [];
+            const normTarget = targetPath.replace(/\/+$|^+\//, '');
+
+            Object.values(tasks).forEach(task => {
+                const taskDir = (task.dir || ROOT_PATH).replace(/\/+$|^+\//, '');
+
+                if (taskDir === normTarget) {
+                    // Task lives directly in this directory
+                    directTasks.push(task);
+                } else if (taskDir.startsWith(normTarget + '/')) {
+                    // Task lives deeper inside a subdirectory under normTarget
+                    const relativePath = taskDir.slice(normTarget.length + 1);
+                    const immediateSubdir = relativePath.split('/')[0];
+                    if (immediateSubdir) {
+                        subdirs.add(immediateSubdir);
+                    }
+                }
+            });
+
+            return {
+                subdirs: Array.from(subdirs).sort((a, b) => a.localeCompare(b)),
+                tasks: directTasks.sort((a, b) => a.title.localeCompare(b.title))
+            };
+        }
+
+        // Calculates completion stats for a specific subdirectory path
+        function getFolderStats(folderPath) {
+            const normFolder = folderPath.replace(/\/+$|^+\//, '');
+            const folderTasks = Object.values(tasks).filter(task => {
+                const taskDir = (task.dir || ROOT_PATH).replace(/\/+$|^+\//, '');
+                return taskDir === normFolder || taskDir.startsWith(normFolder + '/');
+            });
+
+            const completed = folderTasks.filter(t => t.completed).length;
+            return {
+                completed,
+                total: folderTasks.length,
+                isDone: folderTasks.length > 0 && completed === folderTasks.length
+            };
+        }
+
+        function saveProgressToStorage() {
+            const state = {};
+            for (const id in tasks) {
+                state[id] = { completed: tasks[id].completed, title: tasks[id].title };
+            }
+            localStorage.setItem('gmine_task_progress', JSON.stringify(state));
+        }
+
+        function loadProgressFromStorage() {
+            const savedState = localStorage.getItem('gmine_task_progress');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                for (const id in state) {
+                    if (tasks[id]) {
+                        tasks[id].completed = state[id].completed;
+                        if (state[id].title) tasks[id].title = state[id].title;
+                    }
+                }
+            }
+        }
+
+        function resetProgress() {
+            if (confirm("Reset all progress?")) {
+                localStorage.removeItem('gmine_task_progress');
+                location.reload();
+            }
+        }
+
+        function updateStatusBar() {
+            const total = Object.keys(tasks).length;
+            let completed = 0, unlocked = 0;
+            for (const id in tasks) {
+                if (tasks[id].completed) completed++;
+                if (tasks[id].unlocked) unlocked++;
+            }
+            document.getElementById('totalCount').innerText = total;
+            document.getElementById('completedCount').innerText = completed;
+            document.getElementById('unlockedCount').innerText = unlocked;
+        }
+
+        // Main Router: Renders strictly 1 directory level
+        function render() {
+            evaluateAvailability();
+            const container = document.getElementById('spaContainer');
+            container.innerHTML = '';
+
+            // --- 1. BREADCRUMB NAVIGATION ---
+            const header = document.createElement('div');
+            header.className = 'view-header';
+
+            const breadcrumb = document.createElement('div');
+            breadcrumb.className = 'breadcrumb';
+
+            const pathParts = currentPath.split('/');
+            let accumulatedPath = '';
+
+            pathParts.forEach((part, index) => {
+                accumulatedPath += (index === 0 ? '' : '/') + part;
+                const pathToTarget = accumulatedPath;
+
+                if (index > 0) {
+                    const sep = document.createElement('span');
+                    sep.innerText = '/';
+                    sep.style.color = '#666';
+                    breadcrumb.appendChild(sep);
+                }
+
+                const crumb = document.createElement('span');
+                crumb.innerText = part;
+
+                if (index === pathParts.length - 1) {
+                    crumb.className = 'crumb-active';
+                } else {
+                    crumb.className = 'crumb-item';
+                    crumb.onclick = () => {
+                        currentPath = pathToTarget;
+                        render();
+                    };
+                }
+                breadcrumb.appendChild(crumb);
+            });
+
+            header.appendChild(breadcrumb);
+
+            if (currentPath !== ROOT_PATH) {
+                const backBtn = document.createElement('button');
+                backBtn.className = 'back-btn';
+                backBtn.innerText = '⟵ Back';
+                backBtn.onclick = goBack;
+                header.appendChild(backBtn);
+            }
+
+            container.appendChild(header);
+
+            // --- 2. GET CURRENT DIRECTORY CONTENTS ---
+            const { subdirs, tasks: currentTasks } = getDirectoryContents(currentPath);
+
+            // Render Immediate Subdirectories
+            if (subdirs.length > 0) {
+                const dirBlock = document.createElement('div');
+                dirBlock.className = 'block-section';
+                dirBlock.innerHTML = `<div class="block-title">Subdirectories</div>`;
+
+                const dirGrid = document.createElement('div');
+                dirGrid.className = 'grid-container';
+
+                subdirs.forEach(folderName => {
+                    const folderFullPath = `${currentPath}/${folderName}`;
+                    const stats = getFolderStats(folderFullPath);
+
+                    const circle = document.createElement('div');
+                    circle.className = `circle-div folder ${stats.isDone ? 'completed-folder' : ''}`;
+
+                    circle.innerHTML = `
+                        <span class="circle-label">📁 ${folderName}</span>
+                        <span class="circle-status">${stats.completed} / ${stats.total} Done</span>
+                    `;
+
+                    circle.onclick = () => {
+                        currentPath = folderFullPath;
+                        render();
+                    };
+
+                    dirGrid.appendChild(circle);
+                });
+
+                dirBlock.appendChild(dirGrid);
+                container.appendChild(dirBlock);
+            }
+
+            // Render Tasks Directly Inside Current Directory
+            if (currentTasks.length > 0) {
+                const taskBlock = document.createElement('div');
+                taskBlock.className = 'block-section';
+                taskBlock.innerHTML = `<div class="block-title">Tasks in this folder</div>`;
+
+                const taskGrid = document.createElement('div');
+                taskGrid.className = 'grid-container';
+
+                currentTasks.forEach(task => {
+                    const circle = document.createElement('div');
+                    const isAvailable = task.unlocked;
+
+                    circle.className = `circle-div ${!isAvailable ? 'locked' : ''}`;
+
+                    let statusText = task.completed ? 'Completed' : (isAvailable ? 'Pending' : 'Locked');
+
+                    circle.innerHTML = `
+                        <span class="circle-label">${task.title}</span>
+                        <span class="circle-status">${statusText}</span>
+                    `;
+
+                    if (task.completed) {
+                        circle.style.background = '#3b3210';
+                        circle.style.borderColor = '#ffdd5f';
+                    } else if (isAvailable) {
+                        circle.style.background = '#111';
+                        circle.style.borderColor = '#2ed573';
+                        circle.onclick = () => openPopup(task.id);
+                    }
+
+                    taskGrid.appendChild(circle);
+                });
+
+                taskBlock.appendChild(taskGrid);
+                container.appendChild(taskBlock);
+            }
+
+            // Empty Directory Notice
+            if (subdirs.length === 0 && currentTasks.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.color = '#888';
+                emptyMsg.style.padding = '40px';
+                emptyMsg.innerText = 'No contents found in this directory.';
+                container.appendChild(emptyMsg);
+            }
+
+            updateStatusBar();
+        }
+
+        function goBack() {
+            if (currentPath === ROOT_PATH) return;
+            const lastSlashIndex = currentPath.lastIndexOf('/');
+            if (lastSlashIndex === -1) {
+                currentPath = ROOT_PATH;
+            } else {
+                currentPath = currentPath.substring(0, lastSlashIndex);
+            }
+            render();
+        }
+
+        async function openPopup(taskId) {
+            activePopupTaskId = taskId;
+            const task = tasks[taskId];
+            const contentContainer = document.getElementById('popupContainerBody');
+            const popup = document.getElementById('popupWindow');
+
+            popup.scrollTop = 0;
+            contentContainer.innerHTML = '<p>Loading content...</p>';
+
+            try {
+                const response = await fetch(task.contentUrl);
+                if (!response.ok) throw new Error('Failed to load file');
+
+                const htmlText = await response.text();
+                const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+
+                let fileTitle = doc.querySelector('title')?.innerText || doc.querySelector('h1')?.innerText;
+                if (fileTitle) {
+                    task.title = fileTitle;
+                    render();
+                }
+
+                contentContainer.innerHTML = htmlText;
+
+                if (!task.completed) {
+                    const btn = document.createElement('button');
+                    btn.className = 'complete-btn';
+                    btn.innerText = 'Complete Task';
+                    btn.onclick = completeCurrentTask;
+                    contentContainer.appendChild(btn);
+                }
+            } catch (error) {
+                contentContainer.innerHTML = `
+                    <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; border: 1px solid #e1e4e8;">
+                        <h2 style="color: #24292e; margin-top: 0;">${task.title}</h2>
+                        <p style="color: #586069;">Could not load file (<code>${task.contentUrl}</code>).</p>
+                    </div>
+                `;
+                if (!task.completed) {
+                    const btn = document.createElement('button');
+                    btn.className = 'complete-btn';
+                    btn.innerText = 'Complete Task';
+                    btn.onclick = completeCurrentTask;
+                    contentContainer.appendChild(btn);
+                }
+            }
+
+            popup.classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('popupWindow').classList.remove('active');
+        }
+
+        function completeCurrentTask() {
+            const task = tasks[activePopupTaskId];
+            if (task) task.completed = true;
+
+            saveProgressToStorage();
+            closePopup();
+            setTimeout(render, 300);
+        }
+    </script>
+</body>
+
+</html>

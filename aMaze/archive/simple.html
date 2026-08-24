@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPA Slide & Zoom Popup</title>
+    <style>
+        /* Reset and Base Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Container for SPA content */
+        .spa-container {
+            margin-top: 40px;
+        }
+
+        /* 1. Circular Div - Initially hidden off-screen (top) */
+        .circle-div {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            top: -200px; /* Start hidden above */
+            opacity: 0;
+            transition: transform 0.3s ease;
+            user-select: none;
+        }
+
+        /* Hover effect for interactivity */
+        .circle-div:hover {
+            transform: scale(1.05);
+        }
+
+        /* Label inside the circle */
+        .circle-label {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+        /* Class to trigger slide down */
+        .circle-div.slide-down {
+            animation: slideDownAnim 0.8s forwards cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes slideDownAnim {
+            0% {
+                top: -200px;
+                opacity: 0;
+            }
+            100% {
+                top: 0;
+                opacity: 1;
+            }
+        }
+
+        /* 2. Fullscreen Popup - Centered, scaled down to 0, ready to zoom */
+        .popup-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            
+            /* Zoom from center setup */
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        /* Class to trigger zoom-in to full screen */
+        .popup-window.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        /* Close button inside the popup */
+        .close-btn {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+
+        .close-btn:hover {
+            background-color: #ff6b81;
+        }
+
+        .popup-content h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .popup-content p {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="spa-container">
+        <!-- Circular Div with Label -->
+        <div id="circleDiv" class="circle-div" onclick="openPopup()">
+            <span class="circle-label">Click Me</span>
+        </div>
+    </div>
+
+    <!-- Fullscreen Popup Window -->
+    <div id="popupWindow" class="popup-window">
+        <button class="close-btn" onclick="closePopup()">Close</button>
+        <div class="popup-content">
+            <h1>New Window Opened!</h1>
+            <p>This popup zoomed in smoothly from the center of the screen.</p>
+        </div>
+    </div>
+
+    <script>
+        // Function 1: Display the circular div by sliding it down on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const circleDiv = document.getElementById('circleDiv');
+            
+            // Short timeout to ensure smooth DOM rendering before animation triggers
+            setTimeout(() => {
+                circleDiv.classList.add('slide-down');
+            }, 300);
+        });
+
+        // Function 2: Open popup zooming in from the center to take the whole screen
+        function openPopup() {
+            const popup = document.getElementById('popupWindow');
+            popup.classList.add('active');
+        }
+
+        // Helper function to close the popup again
+        function closePopup() {
+            const popup = document.getElementById('popupWindow');
+            popup.classList.remove('active');
+        }
+    </script>
+
+</body>
+</html>

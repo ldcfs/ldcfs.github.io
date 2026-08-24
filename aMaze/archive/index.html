@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D Learning Path System</title>
+  <style>
+    :root {
+      --bg-dark: #0a0d14;
+      --card-bg: rgba(22, 28, 45, 0.85);
+      --accent-cyan: #00f2ff;
+      --accent-purple: #7000ff;
+      --accent-green: #00ff88;
+      --accent-disabled: #3a445d;
+      --text-main: #f0f4f8;
+      --text-muted: #8a9bb2;
+      --nav-height: 70px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ================= STICKY NAVBAR ================= */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background: rgba(10, 13, 20, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 1.5rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-brand {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-brand-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-cyan);
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn:hover {
+      background: rgba(0, 242, 255, 0.15);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+    }
+
+    .btn-primary {
+      background: var(--accent-cyan);
+      color: #000;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: #4df6ff;
+      color: #000;
+      box-shadow: 0 0 15px rgba(0, 242, 255, 0.5);
+    }
+
+    .nav-bottom-row {
+      margin-top: 2px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .current-node-badge {
+      color: var(--accent-cyan);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ================= 3D VIEWPORT & SCENE ================= */
+    .viewport-3d {
+      position: absolute;
+      top: var(--nav-height);
+      left: 0;
+      width: 100vw;
+      height: calc(100vh - var(--nav-height));
+      perspective: 900px;
+      perspective-origin: 50% 80%;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #171e33 0%, #0a0d14 70%);
+    }
+
+    /* World container shifted/rotated for 3D path perception */
+    .world-3d {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* Grid ground effect */
+    .grid-floor {
+      position: absolute;
+      width: 3000px;
+      height: 3000px;
+      left: 50%;
+      top: 50%;
+      margin-left: -1500px;
+      margin-top: -1500px;
+      background-image: 
+        linear-gradient(rgba(0, 242, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 242, 255, 0.08) 1px, transparent 1px);
+      background-size: 80px 80px;
+      transform: rotateX(80deg) translateZ(-200px);
+      pointer-events: none;
+    }
+
+    /* SVG overlay for drawing path lines in 3D */
+    .path-svg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      pointer-events: none;
+    }
+
+    /* ================= NODES ================= */
+    .node-3d {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      margin-left: -80px;
+      margin-top: -80px;
+      transform-style: preserve-3d;
+      cursor: pointer;
+      transition: transform 0.4s ease, filter 0.4s ease;
+    }
+
+    .node-card {
+      width: 100%;
+      height: 100%;
+      background: var(--card-bg);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+
+    .node-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .node-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .node-status {
+      font-size: 0.7rem;
+      margin-top: 0.4rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 10px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Node States */
+    .node-3d.current .node-card {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 30px rgba(0, 242, 255, 0.4), inset 0 0 15px rgba(0, 242, 255, 0.2);
+      animation: pulse-current 2s infinite alternate;
+    }
+
+    .node-3d.current .node-status {
+      background: rgba(0, 242, 255, 0.2);
+      color: var(--accent-cyan);
+    }
+
+    .node-3d.unlocked .node-card {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+    }
+
+    .node-3d.unlocked .node-status {
+      background: rgba(0, 255, 136, 0.2);
+      color: var(--accent-green);
+    }
+
+    .node-3d.locked {
+      cursor: not-allowed;
+      opacity: 0.5;
+      filter: grayscale(0.8);
+    }
+
+    .node-3d.locked .node-card {
+      border-color: var(--accent-disabled);
+    }
+
+    .node-3d.locked .node-status {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    .node-3d:hover:not(.locked) .node-card {
+      transform: scale(1.08) translateY(-5px);
+      border-color: #fff;
+    }
+
+    @keyframes pulse-current {
+      0% { box-shadow: 0 0 20px rgba(0, 242, 255, 0.4); }
+      100% { box-shadow: 0 0 40px rgba(0, 242, 255, 0.8), 0 0 10px #fff; }
+    }
+
+    /* ================= FULLSCREEN POPUP MODALS ================= */
+    .popup-overlay {
+      position: fixed;
+      top: var(--nav-height);
+      left: 0;
+      width: 100vw;
+      height: calc(100vh - var(--nav-height));
+      background: rgba(10, 13, 20, 0.92);
+      backdrop-filter: blur(16px);
+      z-index: 500;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 2rem;
+    }
+
+    .popup-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .popup-content {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 2.5rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+
+    .popup-overlay.active .popup-content {
+      transform: translateY(0);
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .popup-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .popup-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .popup-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .popup-subtitle {
+      color: var(--accent-cyan);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .popup-body {
+      line-height: 1.6;
+      color: #d1d9e6;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    .challenge-box {
+      background: rgba(0, 242, 255, 0.05);
+      border-left: 4px solid var(--accent-cyan);
+      padding: 1.2rem;
+      border-radius: 0 12px 12px 0;
+      margin: 1.5rem 0;
+    }
+
+    .challenge-box h4 {
+      color: var(--accent-cyan);
+      margin-bottom: 0.5rem;
+    }
+
+    .next-nodes-container {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .next-nodes-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    .next-nodes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .next-node-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .next-node-item.unlocked:hover {
+      background: rgba(0, 255, 136, 0.1);
+      border-color: var(--accent-green);
+      transform: translateX(5px);
+    }
+
+    .next-node-item.locked {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* History Items */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .history-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .history-item:hover {
+      background: rgba(0, 242, 255, 0.1);
+      border-color: var(--accent-cyan);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STICKY NAVBAR -->
+  <nav class="navbar">
+    <div class="nav-top-row">
+      <div class="nav-brand">
+        <span class="nav-brand-dot"></span>
+        3D PATH SYSTEM
+      </div>
+      <div class="nav-actions">
+        <button class="btn" id="btn-history">
+          <span>📜</span> History Log
+        </button>
+        <button class="btn" id="btn-reset">
+          <span>🔄</span> Reset
+        </button>
+      </div>
+    </div>
+    <div class="nav-bottom-row">
+      <span>CURRENT LOCATION:</span>
+      <span class="current-node-badge" id="nav-current-node-name">Loading...</span>
+    </div>
+  </nav>
+
+  <!-- 3D VIEWPORT -->
+  <div class="viewport-3d">
+    <div class="world-3d" id="world">
+      <div class="grid-floor"></div>
+      <svg class="path-svg" id="path-svg"></svg>
+      <div id="nodes-container"></div>
+    </div>
+  </div>
+
+  <!-- CURRENT NODE DETAIL POPUP MODAL -->
+  <div class="popup-overlay" id="node-modal">
+    <div class="popup-content">
+      <button class="popup-close" id="modal-close">&times;</button>
+      <div class="popup-header">
+        <div class="popup-subtitle" id="modal-node-category">MODULE OBJECTIVE</div>
+        <h2 class="popup-title" id="modal-node-title">Node Title</h2>
+      </div>
+      <div class="popup-body">
+        <p id="modal-node-desc">Node description will appear here...</p>
+
+        <div class="challenge-box">
+          <h4>🎯 Completion Challenge</h4>
+          <p id="modal-node-challenge">Challenge description...</p>
+        </div>
+
+        <button class="btn btn-primary" id="btn-complete-challenge" style="width: 100%; justify-content: center; padding: 0.8rem;">
+          Comprehend Material & Unlock Path
+        </button>
+
+        <div class="next-nodes-container">
+          <div class="next-nodes-title">Forward Paths (Next Nodes)</div>
+          <div class="next-nodes-list" id="modal-next-nodes">
+            <!-- Dynamic next nodes list -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY POPUP MODAL -->
+  <div class="popup-overlay" id="history-modal">
+    <div class="popup-content">
+      <button class="popup-close" id="history-modal-close">&times;</button>
+      <div class="popup-header">
+        <div class="popup-subtitle">NAVIGATION HISTORY</div>
+        <h2 class="popup-title">Visited Nodes</h2>
+      </div>
+      <div class="popup-body">
+        <p>Select any previously visited node to navigate directly back to it:</p>
+        <div class="history-list" id="history-list">
+          <!-- Dynamic history items -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================= DATA STRUCTURE =================
+    // 3D positioning: X (left/right), Y (up/down ground plane), Z (depth into screen)
+    const nodesData = {
+      'node-1': {
+        id: 'node-1',
+        title: '01. Fundamentals',
+        category: 'Core Concepts',
+        icon: '🚀',
+        desc: 'Master basic core principles required to advance through the learning tree.',
+        challenge: 'Review the architecture documentation and solve Quiz #1.',
+        pos: { x: 0, y: 100, z: 0 },
+        next: ['node-2a', 'node-2b']
+      },
+      'node-2a': {
+        id: 'node-2a',
+        title: '02-A. Frontend Mechanics',
+        category: 'Specialization A',
+        icon: '🎨',
+        desc: 'Explore DOM manipulation, 3D CSS matrix transformations, and UI state engines.',
+        challenge: 'Implement a custom 3D CSS perspective transform calculation.',
+        pos: { x: -280, y: 50, z: -400 },
+        next: ['node-3']
+      },
+      'node-2b': {
+        id: 'node-2b',
+        title: '02-B. Backend Systems',
+        category: 'Specialization B',
+        icon: '⚡',
+        desc: 'Understand state synchronization, event streaming, and API architecture.',
+        challenge: 'Design a async data pipeline model.',
+        pos: { x: 280, y: 50, z: -400 },
+        next: ['node-3']
+      },
+      'node-3': {
+        id: 'node-3',
+        title: '03. Integration & Sync',
+        category: 'Advanced Bridge',
+        icon: '🔗',
+        desc: 'Connect frontend interactive components with backend real-time state machines.',
+        challenge: 'Pass the end-to-end flow integration assessment.',
+        pos: { x: 0, y: 0, z: -800 },
+        next: ['node-4']
+      },
+      'node-4': {
+        id: 'node-4',
+        title: '04. Mastery Core',
+        category: 'Final Milestone',
+        icon: '🏆',
+        desc: 'Demonstrate total comprehension across all preceding branches.',
+        challenge: 'Deploy the full project to production.',
+        pos: { x: 0, y: -50, z: -1200 },
+        next: []
+      }
+    };
+
+    // ================= APP STATE =================
+    let currentState = {
+      currentNodeId: 'node-1',
+      solvedNodeIds: new Set(),
+      unlockedNodeIds: new Set(['node-1']),
+      history: ['node-1']
+    };
+
+    // ================= DOM ELEMENTS =================
+    const worldEl = document.getElementById('world');
+    const nodesContainerEl = document.getElementById('nodes-container');
+    const pathSvgEl = document.getElementById('path-svg');
+    const navCurrentNodeNameEl = document.getElementById('nav-current-node-name');
+    
+    // Modals
+    const nodeModalEl = document.getElementById('node-modal');
+    const historyModalEl = document.getElementById('history-modal');
+    
+    // Modal controls
+    const modalCloseBtn = document.getElementById('modal-close');
+    const historyModalCloseBtn = document.getElementById('history-modal-close');
+    const btnHistory = document.getElementById('btn-history');
+    const btnReset = document.getElementById('btn-reset');
+    const btnCompleteChallenge = document.getElementById('btn-complete-challenge');
+
+    // ================= INITIALIZATION =================
+    function init() {
+      renderNodes();
+      updateView();
+      setupEventListeners();
+    }
+
+    // Render node elements into the 3D world
+    function renderNodes() {
+      nodesContainerEl.innerHTML = '';
+      
+      Object.values(nodesData).forEach(node => {
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'node-3d';
+        nodeEl.id = `node-el-${node.id}`;
+        
+        // Position in 3D Space using CSS transforms
+        nodeEl.style.transform = `translate3d(${node.pos.x}px, ${node.pos.y}px, ${node.pos.z}px)`;
+
+        nodeEl.innerHTML = `
+          <div class="node-card">
+            <div class="node-icon">${node.icon}</div>
+            <div class="node-title">${node.title}</div>
+            <div class="node-status" id="status-${node.id}">Locked</div>
+          </div>
+        `;
+
+        nodeEl.addEventListener('click', () => handleNodeClick(node.id));
+        nodesContainerEl.appendChild(nodeEl);
+      });
+    }
+
+    // Update 3D Camera, Node states, SVGs, and Navbar
+    function updateView() {
+      const currentNode = nodesData[currentState.currentNodeId];
+
+      // Update Navbar
+      navCurrentNodeNameEl.textContent = currentNode.title;
+
+      // Camera Matrix Shift: Move current node to the foreground camera focus
+      // Target camera offsets: invert position of current node
+      const targetX = -currentNode.pos.x;
+      const targetY = -currentNode.pos.y + 120; // Slight upward look angle
+      const targetZ = -currentNode.pos.z + 250;  // Foreground offset
+
+      worldEl.style.transform = `rotateX(15deg) translate3d(${targetX}px, ${targetY}px, ${targetZ}px)`;
+
+      // Update Node Visual States
+      Object.values(nodesData).forEach(node => {
+        const el = document.getElementById(`node-el-${node.id}`);
+        const statusEl = document.getElementById(`status-${node.id}`);
+        
+        el.classList.remove('current', 'unlocked', 'locked');
+
+        if (node.id === currentState.currentNodeId) {
+          el.classList.add('current');
+          statusEl.textContent = 'Current';
+        } else if (currentState.unlockedNodeIds.has(node.id)) {
+          el.classList.add('unlocked');
+          statusEl.textContent = currentState.solvedNodeIds.has(node.id) ? 'Completed' : 'Unlocked';
+        } else {
+          el.classList.add('locked');
+          statusEl.textContent = 'Locked';
+        }
+      });
+
+      renderPaths();
+    }
+
+    // Render 3D SVG Connection Lines between nodes
+    function renderPaths() {
+      let svgHtml = '';
+      
+      Object.values(nodesData).forEach(parent => {
+        parent.next.forEach(childId => {
+          const child = nodesData[childId];
+          
+          const isUnlocked = currentState.unlockedNodeIds.has(childId);
+          const strokeColor = isUnlocked ? '#00ff88' : 'rgba(255, 255, 255, 0.15)';
+          const strokeWidth = isUnlocked ? '4' : '2';
+          const strokeDash = isUnlocked ? '' : 'stroke-dasharray="6,6"';
+
+          // Render simple representation line in 3D scene space
+          svgHtml += `
+            <line 
+              x1="calc(50% + ${parent.pos.x}px)" 
+              y1="calc(50% + ${parent.pos.y}px)" 
+              x2="calc(50% + ${child.pos.x}px)" 
+              y2="calc(50% + ${child.pos.y}px)" 
+              stroke="${strokeColor}" 
+              stroke-width="${strokeWidth}" 
+              ${strokeDash}
+              style="transform: translateZ(${(parent.pos.z + child.pos.z) / 2}px)"
+            />
+          `;
+        });
+      });
+
+      pathSvgEl.innerHTML = svgHtml;
+    }
+
+    // Handle user clicking on a node directly in 3D
+    function handleNodeClick(nodeId) {
+      if (nodeId === currentState.currentNodeId) {
+        openCurrentNodeModal();
+      } else if (currentState.unlockedNodeIds.has(nodeId)) {
+        setCurrentNode(nodeId);
+      }
+    }
+
+    // Set Active Current Node
+    function setCurrentNode(nodeId) {
+      if (currentState.currentNodeId !== nodeId) {
+        currentState.currentNodeId = nodeId;
+        
+        // Add to history if not immediately consecutive repeat
+        if (currentState.history[currentState.history.length - 1] !== nodeId) {
+          currentState.history.push(nodeId);
+        }
+        
+        updateView();
+      }
+      closeModals();
+    }
+
+    // ================= MODAL LOGIC =================
+    function openCurrentNodeModal() {
+      const node = nodesData[currentState.currentNodeId];
+      const isSolved = currentState.solvedNodeIds.has(node.id);
+
+      document.getElementById('modal-node-category').textContent = node.category;
+      document.getElementById('modal-node-title').textContent = `${node.icon} ${node.title}`;
+      document.getElementById('modal-node-desc').textContent = node.desc;
+      document.getElementById('modal-node-challenge').textContent = node.challenge;
+
+      // Update challenge completion button
+      if (isSolved) {
+        btnCompleteChallenge.textContent = '✓ Challenge Completed';
+        btnCompleteChallenge.style.background = 'var(--accent-green)';
+        btnCompleteChallenge.style.color = '#000';
+      } else {
+        btnCompleteChallenge.textContent = 'Comprehend Material & Unlock Path';
+        btnCompleteChallenge.style.background = 'var(--accent-cyan)';
+        btnCompleteChallenge.style.color = '#000';
+      }
+
+      renderModalNextNodes();
+      nodeModalEl.classList.add('active');
+    }
+
+    function renderModalNextNodes() {
+      const node = nodesData[currentState.currentNodeId];
+      const nextContainer = document.getElementById('modal-next-nodes');
+      nextContainer.innerHTML = '';
+
+      if (node.next.length === 0) {
+        nextContainer.innerHTML = '<div style="color: var(--text-muted); font-size:0.9rem;">Final Node Reached!</div>';
+        return;
+      }
+
+      node.next.forEach(nextId => {
+        const nextNode = nodesData[nextId];
+        const isUnlocked = currentState.unlockedNodeIds.has(nextId);
+
+        const item = document.createElement('div');
+        item.className = `next-node-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+        item.innerHTML = `
+          <div>
+            <strong>${nextNode.icon} ${nextNode.title}</strong>
+            <div style="font-size:0.8rem; color:var(--text-muted);">${nextNode.category}</div>
+          </div>
+          <div>${isUnlocked ? '➔ Navigate' : '🔒 Locked'}</div>
+        `;
+
+        if (isUnlocked) {
+          item.addEventListener('click', () => {
+            setCurrentNode(nextId);
+          });
+        }
+
+        nextContainer.appendChild(item);
+      });
+    }
+
+    function openHistoryModal() {
+      const historyListEl = document.getElementById('history-list');
+      historyListEl.innerHTML = '';
+
+      // Render unique history or reverse chronological order
+      currentState.history.forEach((nodeId, index) => {
+        const node = nodesData[nodeId];
+        const isCurrent = nodeId === currentState.currentNodeId;
+
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.innerHTML = `
+          <div>
+            <span style="color:var(--accent-cyan); font-weight:bold; margin-right: 0.5rem;">#${index + 1}</span>
+            <strong>${node.icon} ${node.title}</strong>
+          </div>
+          <div>${isCurrent ? '<span style="color:var(--accent-cyan)">[ Current ]</span>' : 'Jump To ➔'}</div>
+        `;
+
+        item.addEventListener('click', () => {
+          setCurrentNode(nodeId);
+        });
+
+        historyListEl.appendChild(item);
+      });
+
+      historyModalEl.classList.add('active');
+    }
+
+    function closeModals() {
+      nodeModalEl.classList.remove('active');
+      historyModalEl.classList.remove('active');
+    }
+
+    // Solve challenge & unlock children
+    function handleSolveChallenge() {
+      const currentId = currentState.currentNodeId;
+      currentState.solvedNodeIds.add(currentId);
+
+      // Unlock all next nodes
+      const currentNode = nodesData[currentId];
+      currentNode.next.forEach(nextId => {
+        currentState.unlockedNodeIds.add(nextId);
+      });
+
+      updateView();
+      openCurrentNodeModal(); // Refresh modal view
+    }
+
+    function resetProgress() {
+      currentState = {
+        currentNodeId: 'node-1',
+        solvedNodeIds: new Set(),
+        unlockedNodeIds: new Set(['node-1']),
+        history: ['node-1']
+      };
+      closeModals();
+      updateView();
+    }
+
+    // ================= EVENT LISTENERS =================
+    function setupEventListeners() {
+      modalCloseBtn.addEventListener('click', closeModals);
+      historyModalCloseBtn.addEventListener('click', closeModals);
+      btnHistory.addEventListener('click', openHistoryModal);
+      btnReset.addEventListener('click', resetProgress);
+      btnCompleteChallenge.addEventListener('click', handleSolveChallenge);
+
+      // Close popups on backdrop click
+      [nodeModalEl, historyModalEl].forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) closeModals();
+        });
+      });
+    }
+
+    // Run on boot
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Path - Three.js WebGL (Fixed)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root { --nav-height: 70px; --nav-bg: #151b2b; --current: #38bdf8; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0b0f19; color: #fff; overflow: hidden; }
+
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--nav-height);
+            background: var(--nav-bg); border-bottom: 1px solid #1e293b; z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        #nav-current-title { color: var(--current); font-weight: bold; font-size: 0.9rem; margin-top: 4px; }
+        #canvas-container { position: fixed; top: var(--nav-height); bottom: 0; left: 0; right: 0; }
+        
+        .popup {
+            position: fixed; top: var(--nav-height); bottom: 0; left: 0; right: 0;
+            background: rgba(11, 15, 25, 0.95); z-index: 100; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .popup.active { opacity: 1; pointer-events: auto; }
+        .popup-card { background: #1e293b; padding: 30px; border-radius: 12px; max-width: 500px; width: 100%; text-align: center; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button onclick="alert('History Log')" style="background:#2563eb; color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer;">📜 History</button>
+        <div id="nav-current-title">Loading WebGL Scene...</div>
+    </nav>
+
+    <div id="canvas-container"></div>
+
+    <div id="popup" class="popup">
+        <div class="popup-card">
+            <h2 id="p-title" style="color:var(--current); margin-bottom:15px;"></h2>
+            <p id="p-desc" style="margin-bottom:20px; line-height:1.5;"></p>
+            <button onclick="completeNode()" style="background:#f59e0b; color:#000; padding:10px 20px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;">Complete Challenge</button>
+            <br><br><button onclick="document.getElementById('popup').classList.remove('active')" style="background:transparent; border:1px solid #fff; color:#fff; padding:6px 12px; cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+<script>
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0f19);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const pointLight = new THREE.PointLight(0x38bdf8, 1, 2000);
+    pointLight.position.set(0, 200, 200);
+    scene.add(pointLight);
+
+    const challengesList = {};
+    const treeGraph = {};
+    const nodes = {};
+    const nodeMeshes = []; // FIXED: Array specifically for tracking node clicks via raycasting
+    let currentNodeId = 'n0';
+
+    function generateTree() {
+        treeGraph['n0'] = { title: 'Core Node 0', text: 'Root module.', next: ['n1', 'n2'] };
+        challengesList['n0'] = { title: 'Core Node 0', text: 'Root module.' };
+        
+        let q = ['n1', 'n2'];
+        let c = 1;
+        while(q.length > 0 && c < 200) {
+            let curr = q.shift();
+            treeGraph[curr] = { title: `Module ${c}`, text: `Description for module ${c}.`, next: [`child_${c}_a`, `child_${c}_b`] };
+            challengesList[curr] = { title: `Module ${c}`, text: `Description for module ${c}.` };
+            q.push(`child_${c}_a`, `child_${c}_b`);
+            c++;
+        }
+    }
+    generateTree();
+
+    function layoutTree(id, x, y, z, spread) {
+        if(nodes[id] || !treeGraph[id]) return;
+        
+        const geometry = new THREE.SphereGeometry(15, 32, 32);
+        const material = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.3 });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(x, y, z);
+        mesh.userData = { id: id };
+        scene.add(mesh);
+        nodeMeshes.push(mesh); // FIXED: Push to target mesh array
+
+        nodes[id] = { id, status: 'locked', x, y, z, mesh, next: treeGraph[id].next };
+
+        let children = treeGraph[id].next;
+        let step = spread / Math.max(1, children.length);
+        let cx = x - (spread / 2) + (step / 2);
+
+        children.forEach(child => {
+            layoutTree(child, cx, y - 200, z - 500, spread * 0.7);
+            cx += step;
+        });
+    }
+
+    function createLines() {
+        Object.values(nodes).forEach(node => {
+            node.next.forEach(childId => {
+                let child = nodes[childId];
+                if(child) {
+                    const points = [new THREE.Vector3(node.x, node.y, node.z), new THREE.Vector3(child.x, child.y, child.z)];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const material = new THREE.LineBasicMaterial({ color: 0x334155, linewidth: 2 });
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+                }
+            });
+        });
+    }
+
+    function init() {
+        layoutTree('n0', 0, 0, 0, 800);
+        createLines();
+        nodes['n0'].status = 'current';
+        nodes['n0'].mesh.material.color.set(0x38bdf8);
+        updateCamera();
+        animate();
+    }
+
+    function updateCamera() {
+        let active = nodes[currentNodeId];
+        camera.position.set(active.x, active.y + 120, active.z + 280);
+        camera.lookAt(active.x, active.y, active.z);
+        document.getElementById('nav-current-title').textContent = `Current: ${challengesList[currentNodeId].title}`;
+    }
+
+    function completeNode() {
+        nodes[currentNodeId].status = 'completed';
+        nodes[currentNodeId].mesh.material.color.set(0x10b981);
+        nodes[currentNodeId].next.forEach(ch => {
+            if(nodes[ch]) {
+                nodes[ch].status = 'unlocked';
+                nodes[ch].mesh.material.color.set(0xf59e0b);
+            }
+        });
+        document.getElementById('popup').classList.remove('active');
+    }
+
+    // FIXED RAYCASTER: Checks explicitly against `nodeMeshes` instead of all scene objects
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    window.addEventListener('click', (e) => {
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        
+        let intersects = raycaster.intersectObjects(nodeMeshes);
+        if(intersects.length > 0) {
+            let id = intersects[0].object.userData.id;
+            if(nodes[id].status !== 'locked') {
+                currentNodeId = id;
+                updateCamera();
+                document.getElementById('p-title').textContent = challengesList[id].title;
+                document.getElementById('p-desc').textContent = challengesList[id].text;
+                document.getElementById('popup').classList.add('active');
+            }
+        }
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>

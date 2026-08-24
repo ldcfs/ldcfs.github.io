@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Path - Virtualized DOM (Fixed)</title>
+    <style>
+        :root {
+            --nav-height: 70px;
+            --bg-color: #0b0f19;
+            --nav-bg: #151b2b;
+            --text: #e2e8f0;
+            --locked: #334155;
+            --unlocked: #f59e0b;
+            --completed: #10b981;
+            --current: #38bdf8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text); overflow: hidden; }
+
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; height: var(--nav-height);
+            background: var(--nav-bg); border-bottom: 1px solid #1e293b; z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        button { background: #2563eb; color: white; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        #nav-current-title { color: var(--current); font-weight: bold; font-size: 0.9rem; margin-top: 4px; }
+
+        #scene { position: fixed; top: var(--nav-height); bottom: 0; left: 0; right: 0; perspective: 900px; overflow: hidden; }
+        #world { position: absolute; top: 50%; left: 50%; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(0.25, 1, 0.25, 1); }
+
+        .node {
+            position: absolute; width: 70px; height: 70px; margin-left: -35px; margin-top: -35px;
+            border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.75rem; cursor: pointer; border: 2px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s; user-select: none; text-align: center;
+        }
+        .node:hover { transform: scale(1.1); }
+        .node-label { position: absolute; bottom: -25px; background: rgba(0,0,0,0.8); padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
+
+        .locked { background: var(--locked); cursor: not-allowed; opacity: 0.5; }
+        .unlocked { background: var(--unlocked); }
+        .completed { background: var(--completed); }
+        .current { background: var(--current); box-shadow: 0 0 30px var(--current); border: 3px solid #fff; }
+
+        .path-line {
+            position: absolute; height: 8px; margin-top: -4px; background: var(--locked);
+            transform-origin: left center; border-radius: 4px; pointer-events: none;
+        }
+        .path-line.active { background: var(--completed); }
+        .path-line.unlocked { background: var(--unlocked); }
+
+        .popup {
+            position: fixed; top: var(--nav-height); bottom: 0; left: 0; right: 0;
+            background: rgba(11, 15, 25, 0.95); z-index: 100; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        .popup.active { opacity: 1; pointer-events: auto; }
+        .popup-card { background: #1e293b; padding: 30px; border-radius: 12px; max-width: 500px; width: 100%; text-align: center; border: 1px solid #334155; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button onclick="openHistory()">📜 View History</button>
+        <div id="nav-current-title">Loading...</div>
+    </nav>
+
+    <div id="scene"><div id="world"></div></div>
+
+    <div id="popup" class="popup">
+        <div class="popup-card">
+            <h2 id="p-title" style="color:var(--current); margin-bottom:15px;"></h2>
+            <p id="p-desc" style="margin-bottom:20px; line-height:1.5;"></p>
+            <button id="p-btn" style="background:var(--unlocked); color:#000; padding:10px 20px; margin-bottom:15px; font-weight:bold; border:none; border-radius:6px; cursor:pointer;" onclick="completeNode()">Complete Challenge</button>
+            <br><button onclick="closePopup()" style="background:transparent; border:1px solid #fff; color:#fff; padding:6px 12px; cursor:pointer;">Close Window</button>
+        </div>
+    </div>
+
+<script>
+    const challengesList = {};
+    const treeGraph = {};
+
+    function generateLargeTree() {
+        treeGraph['n0'] = { title: 'Root: Genesis', text: 'Start your journey.', next: ['n1_1', 'n1_2'] };
+        challengesList['n0'] = { title: 'Genesis', text: 'Start your journey.' };
+
+        let queue = ['n1_1', 'n1_2'];
+        let counter = 1;
+
+        while(queue.length > 0 && counter < 150) {
+            let curr = queue.shift();
+            treeGraph[curr] = { title: `Module ${counter}`, text: `System module description for module ${counter}.`, next: [`next_${counter}_a`, `next_${counter}_b`] };
+            challengesList[curr] = { title: `Module ${counter}`, text: `System module description for module ${counter}.` };
+
+            queue.push(`next_${counter}_a`, `next_${counter}_b`);
+            counter++;
+        }
+    }
+    generateLargeTree();
+
+    let nodes = {};
+    let currentNodeId = 'n0';
+
+    function init() {
+        layoutTree('n0', 0, 0, 0, 1000);
+        nodes['n0'].status = 'current';
+        renderScene();
+    }
+
+    function layoutTree(id, x, y, z, spread) {
+        if(nodes[id] || !treeGraph[id]) return;
+        nodes[id] = { id, status: 'locked', x, y, z, next: treeGraph[id].next };
+        
+        let children = treeGraph[id].next;
+        let step = spread / Math.max(1, children.length);
+        let cx = x - (spread / 2) + (step / 2);
+
+        children.forEach(child => {
+            layoutTree(child, cx, y - 250, z - 600, spread * 0.7);
+            cx += step;
+        });
+    }
+
+    function renderScene() {
+        const world = document.getElementById('world');
+        world.innerHTML = '';
+        const active = nodes[currentNodeId];
+        
+        Object.values(nodes).forEach(node => {
+            const dist = Math.hypot(node.x - active.x, node.y - active.y, node.z - active.z);
+            
+            // Local virtualization radius
+            if (dist < 1500 || node.status === 'current' || node.status === 'unlocked' || node.status === 'completed') {
+                node.next.forEach(childId => {
+                    let child = nodes[childId];
+                    if(child) drawLine(node, child);
+                });
+
+                let el = document.createElement('div');
+                el.className = `node ${node.status}`;
+                el.style.transform = `translate3d(${node.x}px, ${node.y}px, ${node.z}px)`;
+                el.innerHTML = `<div>${node.status === 'locked' ? '🔒' : '⭐'}</div><div class="node-label">${challengesList[node.id].title}</div>`;
+                el.onclick = () => { if(node.status !== 'locked') { currentNodeId = node.id; openPopup(); renderScene(); } };
+                world.appendChild(el);
+            }
+        });
+
+        // FIXED CAMERA CENTERING: Scales vertical offset proportionally to Z depth to prevent drifting
+        const depthLevel = Math.abs(active.z) / 600;
+        const dynamicYOffset = 200 + (depthLevel * 30);
+        const dynamicZOffset = 300 + (depthLevel * 20);
+
+        world.style.transform = `translate3d(${-active.x}px, ${-active.y + dynamicYOffset}px, ${-active.z + dynamicZOffset}px) rotateX(-10deg)`;
+        document.getElementById('nav-current-title').textContent = `Current: ${challengesList[currentNodeId].title}`;
+    }
+
+    function drawLine(p1, p2) {
+        let dx = p2.x - p1.x, dy = p2.y - p1.y, dz = p2.z - p1.z;
+        let distXZ = Math.hypot(dx, dz), dist = Math.hypot(distXZ, dy);
+        let line = document.createElement('div');
+        
+        let st = '';
+        if((p1.status === 'completed' || p1.status === 'current') && p2.status !== 'locked') st = 'unlocked';
+        if(p2.status === 'completed' || p2.status === 'current') st = 'active';
+
+        line.className = `path-line ${st}`;
+        line.style.width = `${dist}px`;
+        line.style.transform = `translate3d(${p1.x}px, ${p1.y}px, ${p1.z}px) rotateY(${Math.atan2(-dz, dx)}rad) rotateZ(${Math.atan2(dy, distXZ)}rad) rotateX(90deg)`;
+        document.getElementById('world').appendChild(line);
+    }
+
+    function openPopup() {
+        document.getElementById('p-title').textContent = challengesList[currentNodeId].title;
+        document.getElementById('p-desc').textContent = challengesList[currentNodeId].text;
+        document.getElementById('popup').classList.add('active');
+    }
+
+    function completeNode() {
+        nodes[currentNodeId].completedFlag = true;
+        nodes[currentNodeId].status = 'completed';
+        nodes[currentNodeId].next.forEach(ch => { if(nodes[ch]) nodes[ch].status = 'unlocked'; });
+        closePopup();
+        renderScene();
+    }
+
+    function closePopup() { document.getElementById('popup').classList.remove('active'); }
+    function openHistory() { alert("History log feature active."); }
+
+    window.onload = init;
+</script>
+</body>
+</html>

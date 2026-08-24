@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPA Progressive Tasks Challenge</title>
+    <style>
+        /* Reset and Base Styling */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #1a1a1a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Container for SPA content */
+        .spa-container {
+            margin-top: 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+
+        /* Circular Div - Initially hidden off-screen (top) */
+        .circle-div {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            position: relative;
+            top: -200px;
+            opacity: 0;
+            transition: transform 0.3s ease;
+            user-select: none;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .circle-div:hover {
+            transform: scale(1.05);
+        }
+
+        .circle-label {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 15px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+        }
+
+        .circle-status {
+            color: #fffacd;
+            font-size: 11px;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Class to trigger slide down */
+        .circle-div.slide-down {
+            animation: slideDownAnim 0.8s forwards cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes slideDownAnim {
+            0% {
+                top: -200px;
+                opacity: 0;
+            }
+            100% {
+                top: 0;
+                opacity: 1;
+            }
+        }
+
+        /* Fullscreen Popup Window */
+        .popup-window {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: scale(0);
+            opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        .popup-window.active {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+
+        .close-btn:hover {
+            background-color: #ff6b81;
+        }
+
+        .popup-content {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        .popup-content h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .popup-content p {
+            color: #666;
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        .complete-btn {
+            background-color: #2ed573;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: background-color 0.2s;
+        }
+
+        .complete-btn:hover {
+            background-color: #26af5f;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Container where dynamic tasks/circles will appear -->
+    <div id="spaContainer" class="spa-container"></div>
+
+    <!-- Fullscreen Popup Window -->
+    <div id="popupWindow" class="popup-window">
+        <button class="close-btn" onclick="closePopup()">Close</button>
+        <div class="popup-content">
+            <h1 id="popupTitle">Task Title</h1>
+            <p id="popupDescription">Task description goes here...</p>
+            <button id="completeBtn" class="complete-btn" onclick="completeCurrentTask()">Complete Task</button>
+        </div>
+    </div>
+
+    <script>
+        // Data structure for tasks/challenges/teachings
+        const tasks = [
+            { id: 1, title: "Foundation", description: "Understand the core philosophy of single-page apps and responsive UI loops.", completed: false },
+            { id: 2, title: "Interaction", description: "Master user events, state transformations, and smooth animations.", completed: false },
+            { id: 3, title: "Progression", description: "Implement sequential unlocking mechanics to drive continuous engagement.", completed: false }
+        ];
+
+        let currentActiveIndex = 0;
+        let activePopupTaskId = null;
+
+        // Initialize SPA and render the first available task
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTasks();
+        });
+
+        // Function to render available circles based on progress
+        function renderTasks() {
+            const container = document.getElementById('spaContainer');
+            container.innerHTML = ''; // Clear container
+
+            // Render tasks up to the current unlocked index
+            for (let i = 0; i <= currentActiveIndex && i < tasks.length; i++) {
+                const task = tasks[i];
+                
+                const circleDiv = document.createElement('div');
+                circleDiv.className = 'circle-div';
+                circleDiv.id = `task-circle-${task.id}`;
+                
+                let statusText = task.completed ? 'Completed' : 'Available';
+                
+                circleDiv.innerHTML = `
+                    <span class="circle-label">${task.title}</span>
+                    <span class="circle-status">${statusText}</span>
+                `;
+
+                // Change color if completed
+                if (task.completed) {
+                    circleDiv.style.background = 'linear-gradient(135deg, #2ed573, #7bed9f)';
+                }
+
+                // Click event to open popup
+                circleDiv.onclick = () => openPopup(task.id);
+
+                container.appendChild(circleDiv);
+
+                // Trigger slide down animation for newly added circles
+                setTimeout(() => {
+                    circleDiv.classList.add('slide-down');
+                }, 50 * i);
+            }
+        }
+
+        // Open popup with specific task data, zooming from center
+        function openPopup(taskId) {
+            activePopupTaskId = taskId;
+            const task = tasks.find(t => t.id === taskId);
+
+            document.getElementById('popupTitle').innerText = task.title;
+            document.getElementById('popupDescription').innerText = task.description;
+            
+            const completeBtn = document.getElementById('completeBtn');
+            if (task.completed) {
+                completeBtn.style.display = 'none'; // Hide if already finished
+            } else {
+                completeBtn.style.display = 'inline-block';
+            }
+
+            const popup = document.getElementById('popupWindow');
+            popup.classList.add('active');
+        }
+
+        // Close popup window
+        function closePopup() {
+            const popup = document.getElementById('popupWindow');
+            popup.classList.remove('active');
+        }
+
+        // Complete the active task and unlock the next one sequentially
+        function completeCurrentTask() {
+            const task = tasks.find(t => t.id === activePopupTaskId);
+            if (task) {
+                task.completed = true;
+            }
+
+            closePopup();
+
+            // If this was the latest unlocked task, unlock the next one in sequence
+            const taskIndex = tasks.findIndex(t => t.id === activePopupTaskId);
+            if (taskIndex === currentActiveIndex && currentActiveIndex < tasks.length - 1) {
+                currentActiveIndex++;
+            }
+
+            // Re-render to show updated state and unlock new task
+            setTimeout(renderTasks, 300);
+        }
+    </script>
+
+</body>
+</html>

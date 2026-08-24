@@ -1,0 +1,22 @@
+{
+    "1": { "id": 1, "title": "1. Awakening", "contentUrl": "task1.html", "required": [], "completed": false },
+    "2": { "id": 2, "title": "2A. Logic Core", "contentUrl": "task2.html", "required": [1], "completed": false },
+    "3": { "id": 3, "title": "2B. Visuals", "contentUrl": "task3.html", "required": [1], "completed": false },
+    "4": { "id": 4, "title": "3A1. Bitwise", "contentUrl": "task4.html", "required": [2], "completed": false },
+    "5": { "id": 5, "title": "3A2. States", "contentUrl": "task5.html", "required": [2], "completed": false },
+    "6": { "id": 6, "title": "3B1. Vectors", "contentUrl": "task6.html", "required": [3], "completed": false },
+    "7": { "id": 7, "title": "3B2. Shaders", "contentUrl": "task7.html", "required": [3], "completed": false },
+    "8": { "id": 8, "title": "4A. Masking", "contentUrl": "task8.html", "required": [4], "completed": false },
+    "9": { "id": 9, "title": "4B. Pointers", "contentUrl": "task9.html", "required": [4], "completed": false },
+    "10": { "id": 10, "title": "4C. Context", "contentUrl": "task10.html", "required": [5], "completed": false },
+    "11": { "id": 11, "title": "4D. Redux", "contentUrl": "task11.html", "required": [5], "completed": false },
+    "12": { "id": 12, "title": "4E. Paths", "contentUrl": "task12.html", "required": [6], "completed": false },
+    "13": { "id": 13, "title": "4F. Meshes", "contentUrl": "task13.html", "required": [6], "completed": false },
+    "14": { "id": 14, "title": "4G. Passes", "contentUrl": "task14.html", "required": [7], "completed": false },
+    "15": { "id": 15, "title": "4H. Audio", "contentUrl": "task15.html", "required": [7], "completed": false },
+    "16": { "id": 16, "title": "5A. Systems", "contentUrl": "task16.html", "required": [8, 9], "completed": false },
+    "17": { "id": 17, "title": "5B. Flux", "contentUrl": "task17.html", "required": [10, 11], "completed": false },
+    "18": { "id": 18, "title": "5C. Engine", "contentUrl": "task18.html", "required": [12, 13], "completed": false },
+    "19": { "id": 19, "title": "5D. Synthesizer", "contentUrl": "task19.html", "required": [14, 15], "completed": false },
+    "20": { "id": 20, "title": "6. Mastery", "contentUrl": "task20.html", "required": [16, 17, 18, 19], "completed": false }
+}

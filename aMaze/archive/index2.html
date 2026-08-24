@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3D Learning Path</title>
+<style>
+    /* =========================================
+       CSS Variables & Reset
+       ========================================= */
+    :root {
+        --nav-height: 80px;
+        --bg-color: #0b0f19;
+        --nav-bg: #151b2b;
+        --text-color: #e2e8f0;
+        --primary: #38bdf8;
+        --node-locked: #334155;
+        --node-unlocked: #f59e0b;
+        --node-current: #10b981;
+        --node-completed: #3b82f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-color);
+        overflow: hidden; /* Prevent scrolling, handled by 3D scene */
+    }
+
+    /* =========================================
+       Sticky Navbar
+       ========================================= */
+    nav {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: var(--nav-height);
+        background: var(--nav-bg);
+        border-bottom: 2px solid #1e293b;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 0 20px;
+    }
+    .menu-options {
+        display: flex;
+        gap: 10px;
+    }
+    button {
+        background: var(--primary);
+        color: #000;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: 0.2s;
+    }
+    button:hover { filter: brightness(1.2); }
+    
+    #nav-current-name {
+        margin-top: 8px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: var(--node-current);
+    }
+
+    /* =========================================
+       3D Scene & World
+       ========================================= */
+    #scene {
+        position: fixed;
+        top: var(--nav-height);
+        bottom: 0; left: 0; right: 0;
+        perspective: 800px; /* Determines the 3D depth effect */
+        overflow: hidden;
+    }
+
+    #world {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform-style: preserve-3d;
+        transition: transform 1.2s cubic-bezier(0.25, 1, 0.25, 1);
+    }
+
+    /* =========================================
+       Nodes & Paths
+       ========================================= */
+    .node {
+        position: absolute;
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        margin-left: -40px; margin-top: -40px; /* Center origin */
+        display: flex; align-items: center; justify-content: center;
+        text-align: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background 0.5s, box-shadow 0.5s, transform 0.2s;
+        border: 2px solid rgba(255,255,255,0.2);
+        user-select: none;
+    }
+    .node:hover { transform: scale(1.1); }
+    
+    .node .label {
+        position: absolute;
+        bottom: -25px;
+        white-space: nowrap;
+        background: rgba(0,0,0,0.6);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* Node States */
+    .locked { background: var(--node-locked); cursor: not-allowed; opacity: 0.5; }
+    .locked:hover { transform: scale(1); }
+    .unlocked { background: var(--node-unlocked); box-shadow: 0 0 15px var(--node-unlocked); }
+    .completed { background: var(--node-completed); }
+    .current { 
+        background: var(--node-current); 
+        box-shadow: 0 0 30px var(--node-current); 
+        border-color: #fff;
+    }
+
+    .path-line {
+        position: absolute;
+        height: 4px;
+        background: rgba(255,255,255,0.15);
+        transform-origin: left center;
+        pointer-events: none;
+        transition: background 0.5s;
+    }
+    .path-line.active { background: var(--node-completed); }
+
+    /* =========================================
+       Popup Window
+       ========================================= */
+    #popup {
+        position: fixed;
+        top: var(--nav-height);
+        bottom: 0; left: 0; right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(8px);
+        z-index: 900;
+        display: none;
+        padding: 40px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    #popup.active { display: flex; }
+
+    #popup-inner {
+        max-width: 600px;
+        background: #1e293b;
+        padding: 30px;
+        border-radius: 12px;
+        border: 1px solid #334155;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    
+    #popup h2 { color: var(--primary); margin-bottom: 15px; }
+    #popup p { line-height: 1.6; margin-bottom: 25px; font-size: 1.1rem; }
+    
+    .next-nodes-list {
+        display: flex; flex-direction: column; gap: 10px; margin-top: 20px;
+    }
+    .next-node-btn {
+        background: var(--node-unlocked);
+        color: #000;
+        padding: 10px;
+        font-size: 1rem;
+    }
+    
+    .history-list {
+        display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto;
+    }
+    .history-btn { background: var(--node-completed); color: #fff; }
+
+    .close-btn { margin-top: 30px; background: transparent; border: 1px solid #fff; color: #fff; }
+</style>
+</head>
+<body>
+
+    <!-- Sticky Navbar -->
+    <nav>
+        <div class="menu-options">
+            <button onclick="openHistory()">📜 View History</button>
+            <button onclick="resetApp()" style="background: #ef4444; color: white;">🔄 Reset</button>
+        </div>
+        <div id="nav-current-name">Current Node: Loading...</div>
+    </nav>
+
+    <!-- 3D Scene -->
+    <div id="scene">
+        <div id="world">
+            <!-- Dynamically injected nodes and lines go here -->
+        </div>
+    </div>
+
+    <!-- Popup Window -->
+    <div id="popup">
+        <div id="popup-inner">
+            <h2 id="popup-title">Title</h2>
+            <div id="popup-body">Content goes here...</div>
+            <div id="popup-actions"></div>
+            <button class="close-btn" onclick="closePopup()">Close Window</button>
+        </div>
+    </div>
+
+<script>
+    // =========================================
+    // Data & State structure
+    // Nodes are positioned: X (left/right), Y (up/down), Z (depth into screen)
+    // Towards top = negative Y, into screen = negative Z
+    // =========================================
+    const initialNodes = {
+        'n1': { id: 'n1', name: "Basics", x: 0, y: 0, z: 0, next: ['n2', 'n3'], material: "Learn the fundamentals of the system here.", completed: false, status: 'current' },
+        'n2': { id: 'n2', name: "Logic Gate", x: -250, y: -200, z: -400, next: ['n4'], material: "Understand conditional branches.", completed: false, status: 'locked' },
+        'n3': { id: 'n3', name: "Data Loops", x: 250, y: -200, z: -400, next: ['n5'], material: "Master repetitive tasks and iterations.", completed: false, status: 'locked' },
+        'n4': { id: 'n4', name: "Front End", x: -250, y: -400, z: -800, next: ['n6'], material: "UI and user interactions.", completed: false, status: 'locked' },
+        'n5': { id: 'n5', name: "Back End", x: 250, y: -400, z: -800, next: ['n6'], material: "Server and database management.", completed: false, status: 'locked' },
+        'n6': { id: 'n6', name: "Full Stack Master", x: 0, y: -600, z: -1200, next: [], material: "Combine everything you have learned to complete the final challenge.", completed: false, status: 'locked' },
+    };
+
+    let nodes = JSON.parse(JSON.stringify(initialNodes));
+    let currentNodeId = 'n1';
+    let historyStack = ['n1'];
+
+    // DOM Elements
+    const worldEl = document.getElementById('world');
+    const navNameEl = document.getElementById('nav-current-name');
+    const popupEl = document.getElementById('popup');
+    const popupTitleEl = document.getElementById('popup-title');
+    const popupBodyEl = document.getElementById('popup-body');
+    const popupActionsEl = document.getElementById('popup-actions');
+
+    // =========================================
+    // Initialization and Rendering
+    // =========================================
+    function init() {
+        buildScene();
+        updateCamera();
+        updateNavbar();
+    }
+
+    function buildScene() {
+        worldEl.innerHTML = '';
+        
+        // 1. Draw Paths (Lines) between nodes
+        Object.values(nodes).forEach(node => {
+            node.next.forEach(targetId => {
+                const target = nodes[targetId];
+                drawLine(node, target);
+            });
+        });
+
+        // 2. Draw Nodes
+        Object.values(nodes).forEach(node => {
+            const el = document.createElement('div');
+            el.className = `node ${node.status}`;
+            el.id = `node-${node.id}`;
+            el.innerHTML = `<div>${node.id.toUpperCase()}</div><div class="label">${node.name}</div>`;
+            
+            // Set 3D Position
+            el.style.transform = `translate3d(${node.x}px, ${node.y}px, ${node.z}px)`;
+            
+            el.onclick = () => handleNodeClick(node.id);
+            worldEl.appendChild(el);
+        });
+    }
+
+    // Mathematical function to draw 3D lines using CSS transforms
+    function drawLine(p1, p2) {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const dz = p2.z - p1.z;
+
+        // Calculate the horizontal distance in the X/Z plane
+        const distXZ = Math.hypot(dx, dz);
+        // Calculate the total 3D distance
+        const dist = Math.hypot(distXZ, dy);
+
+        // CSS rotateY: positive angles rotate the +X axis towards the -Z axis (into screen).
+        // Math.atan2 takes (opposite, adjacent) -> we want the angle relative to the X axis.
+        const rotY = Math.atan2(-dz, dx);
+
+        // CSS rotateZ: positive angles rotate the +X axis towards the +Y axis (downward).
+        // We use the vertical difference (dy) and the horizontal distance (distXZ) to find the tilt.
+        const rotZ = Math.atan2(dy, distXZ);
+
+        const line = document.createElement('div');
+        line.className = 'path-line';
+        if (p1.completed) line.classList.add('active');
+        line.id = `line-${p1.id}-${p2.id}`;
+
+        line.style.width = `${dist}px`;
+        line.style.marginTop = '-2px'; // perfectly vertically centers the 4px thick line
+
+        // Position at p1, then rotate horizontally (Y), then tilt vertically (Z)
+        line.style.transform = `translate3d(${p1.x}px, ${p1.y}px, ${p1.z}px) rotateY(${rotY}rad) rotateZ(${rotZ}rad)`;
+
+        worldEl.appendChild(line);
+    }
+
+    // =========================================
+    // Mechanics & Navigation
+    // =========================================
+    
+    // Moves the #world container so the current node sits at the camera foreground
+    function updateCamera() {
+        const current = nodes[currentNodeId];
+        // We move the world exactly opposite to the node's position, 
+        // with a slight Y offset so it sits nicely below the screen center.
+        const focusY_Offset = 150; 
+        
+        worldEl.style.transform = `translate3d(${-current.x}px, ${-current.y + focusY_Offset}px, ${-current.z}px)`;
+    }
+
+    function updateNavbar() {
+        navNameEl.innerText = `Current Node: ${nodes[currentNodeId].name}`;
+    }
+
+    function handleNodeClick(id) {
+        const node = nodes[id];
+        if (node.status === 'locked') return; // Do nothing if locked
+        
+        if (id === currentNodeId) {
+            openNodeMaterial(id);
+        } else {
+            // It's unlocked or completed, but not current. Navigate to it.
+            navigateToNode(id);
+        }
+    }
+
+    function navigateToNode(id) {
+        // Remove 'current' status from old node (revert to completed/unlocked)
+        const oldNode = nodes[currentNodeId];
+        oldNode.status = oldNode.completed ? 'completed' : 'unlocked';
+        document.getElementById(`node-${oldNode.id}`).className = `node ${oldNode.status}`;
+        
+        // Set new node to current
+        currentNodeId = id;
+        nodes[id].status = 'current';
+        document.getElementById(`node-${id}`).className = 'node current';
+        
+        // Add to history if it's not the last one
+        if (historyStack[historyStack.length - 1] !== id) {
+            historyStack.push(id);
+        }
+
+        updateCamera();
+        updateNavbar();
+        closePopup();
+    }
+
+    // =========================================
+    // Popups Logic (Material / Challenges)
+    // =========================================
+    function openNodeMaterial(id) {
+        const node = nodes[id];
+        popupTitleEl.innerText = `${node.name} (Material & Challenge)`;
+        popupBodyEl.innerHTML = `<p>${node.material}</p>`;
+        popupActionsEl.innerHTML = '';
+
+        if (!node.completed) {
+            // Show challenge button
+            const btn = document.createElement('button');
+            btn.innerText = "Challenge Solved: Comprehend Material!";
+            btn.style.padding = "15px";
+            btn.onclick = () => completeChallenge(id);
+            popupActionsEl.appendChild(btn);
+        } else {
+            // Node is completed, show unlocked next nodes
+            popupBodyEl.innerHTML += `<p style="color:var(--node-current); font-weight:bold;">Challenge Completed!</p>`;
+            
+            if (node.next.length > 0) {
+                const list = document.createElement('div');
+                list.className = 'next-nodes-list';
+                list.innerHTML = `<h3>Available Next Paths:</h3>`;
+                
+                node.next.forEach(nextId => {
+                    const nextNode = nodes[nextId];
+                    const btn = document.createElement('button');
+                    btn.className = 'next-node-btn';
+                    btn.innerText = `Travel to: ${nextNode.name}`;
+                    btn.onclick = () => navigateToNode(nextId);
+                    list.appendChild(btn);
+                });
+                popupActionsEl.appendChild(list);
+            } else {
+                popupActionsEl.innerHTML = `<h3>Congratulations, you've reached the end of the tree!</h3>`;
+            }
+        }
+        
+        popupEl.classList.add('active');
+    }
+
+    function completeChallenge(id) {
+        const node = nodes[id];
+        node.completed = true;
+        
+        // Unlock next nodes
+        node.next.forEach(nextId => {
+            const nextNode = nodes[nextId];
+            if(nextNode.status === 'locked') {
+                nextNode.status = 'unlocked';
+                document.getElementById(`node-${nextId}`).className = 'node unlocked';
+            }
+            // Update line color
+            const line = document.getElementById(`line-${id}-${nextId}`);
+            if (line) line.classList.add('active');
+        });
+
+        // Re-render popup to show new options
+        openNodeMaterial(id);
+    }
+
+    function openHistory() {
+        popupTitleEl.innerText = "Navigation History";
+        popupBodyEl.innerHTML = `<p>Click a previously visited node to jump back.</p>`;
+        popupActionsEl.innerHTML = '';
+
+        const list = document.createElement('div');
+        list.className = 'history-list';
+        
+        // Render history backwards (most recent first)
+        [...historyStack].reverse().forEach((id, index) => {
+            const node = nodes[id];
+            const btn = document.createElement('button');
+            btn.className = 'history-btn';
+            btn.innerText = `${id === currentNodeId ? '📍 [Current] ' : ''}${node.name}`;
+            
+            btn.onclick = () => {
+                if(id !== currentNodeId) navigateToNode(id);
+            };
+            list.appendChild(btn);
+        });
+
+        popupActionsEl.appendChild(list);
+        popupEl.classList.add('active');
+    }
+
+    function closePopup() {
+        popupEl.classList.remove('active');
+    }
+
+    function resetApp() {
+        nodes = JSON.parse(JSON.stringify(initialNodes));
+        currentNodeId = 'n1';
+        historyStack = ['n1'];
+        closePopup();
+        init();
+    }
+
+    // Start App
+    window.onload = init;
+
+</script>
+</body>
+</html>
